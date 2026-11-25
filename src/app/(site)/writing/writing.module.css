@@ -1,0 +1,17 @@
+.year {
+  margin-top: clamp(48px, 8vw, 64px);
+}
+
+.yearTitle {
+  margin: 0 0 10px 20px;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0;
+  color: var(--label-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.empty {
+  margin-top: 48px;
+  color: var(--label-3);
+}

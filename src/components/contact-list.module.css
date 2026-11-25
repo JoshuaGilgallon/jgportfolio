@@ -1,0 +1,120 @@
+.list {
+  --r: var(--r-lg);
+  overflow: hidden;
+  background: var(--fill);
+}
+
+.item {
+  position: relative;
+}
+
+/* Hairline inset to the label, past the icon tile, as in iOS Settings. */
+.item + .item::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 62px;
+  right: 0;
+  height: 1px;
+  background: var(--separator);
+  transform: scaleY(0.5);
+  transform-origin: top;
+  transition: opacity var(--spring-smooth);
+}
+
+@media (max-resolution: 1dppx) {
+  .item + .item::before {
+    transform: none;
+  }
+}
+
+.item:has(.row:hover)::before,
+.item:has(.row:hover) + .item::before {
+  opacity: 0;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 56px;
+  padding: 0 18px 0 20px;
+  border: 0;
+  background: none;
+  text-align: left;
+  transition: background-color var(--spring-smooth);
+}
+
+.row:hover {
+  background: var(--fill-hover);
+}
+
+.row:focus-visible {
+  outline-offset: -3px;
+}
+
+.tile {
+  /* Apple's icon grid: corner radius is 22.37% of the tile. */
+  --r: calc(30px * 0.2237);
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 30px;
+  height: 30px;
+  color: #fff;
+  background: linear-gradient(180deg, #a1a1a6, #7c7c80);
+}
+
+.tile[data-kind="email"] {
+  background: linear-gradient(180deg, #22a2ff, #0a6cff);
+}
+.tile[data-kind="github"] {
+  background: linear-gradient(180deg, #3a3f46, #1f2328);
+}
+.tile[data-kind="discord"] {
+  background: linear-gradient(180deg, #7380ff, #5865f2);
+}
+.tile[data-kind="linkedin"] {
+  background: linear-gradient(180deg, #1b7fd8, #0a66c2);
+}
+.tile[data-kind="x"] {
+  background: linear-gradient(180deg, #2c2c2e, #000);
+}
+
+.glyph {
+  width: 18px;
+  height: 18px;
+}
+
+.tile[data-kind="x"] .glyph {
+  width: 15px;
+  height: 15px;
+}
+
+.tile[data-kind="linkedin"] .glyph {
+  width: 16px;
+  height: 16px;
+}
+
+.label {
+  flex: 1;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.value {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--label-2);
+}
+
+.icon {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin-left: -4px;
+  color: var(--label-3);
+}

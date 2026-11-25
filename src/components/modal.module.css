@@ -1,0 +1,129 @@
+/* ---------- Dialog: a clear layer over the whole screen ---------- */
+
+/* Only while open: an author `display` would otherwise override the
+   browser's `display: none` for closed dialogs. */
+.dialog[open] {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  place-items: center;
+  width: auto;
+  height: auto;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 40px 24px;
+  border: 0;
+  overflow: visible;
+  background: transparent;
+  color: var(--label);
+}
+
+/* ---------- Pane ---------- */
+
+/* Every frame of the morph is drawn by script (src/components/modal.tsx),
+   so nothing here transitions. At rest this is simply the pane. */
+.panel {
+  --r: 30px;
+  --lift: 1;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: min(800px, 100%);
+  max-height: calc(100dvh - 80px);
+  overflow: clip;
+  background: var(--bg);
+  box-shadow:
+    0 0 0 0.5px rgb(0 0 0 / calc(0.06 * var(--lift))),
+    0 12px 32px rgb(0 0 0 / calc(0.08 * var(--lift))),
+    0 40px 100px rgb(0 0 0 / calc(0.16 * var(--lift)));
+}
+
+.scroll {
+  /* Content inside (e.g. full-bleed code on phones) measures from these edges. */
+  --gutter: clamp(24px, 7vw, 64px);
+  flex: 0 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: clamp(32px, 7vw, 64px) var(--gutter) clamp(40px, 7vw, 64px);
+}
+
+/* Keep the title clear of the close button. */
+.scroll :is(h1, h2):first-of-type {
+  padding-right: 40px;
+}
+
+/* The card's own content, dissolving as the pane takes its place. */
+.ghost {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+  pointer-events: none;
+}
+
+.dialog[data-morphing] :is(.panel, .scroll, .ghost) {
+  will-change: transform, opacity, filter;
+}
+
+@media (max-width: 600px) {
+  .dialog[open] {
+    padding: 8px;
+  }
+
+  .panel {
+    --r: 24px;
+    max-height: calc(100dvh - 16px);
+  }
+}
+
+/* ---------- Backdrop: frosted glass ---------- */
+
+/* A true Gaussian blur of the page behind, lifted with a little saturation
+   and a soft grey veil, like an iOS material. Only its opacity follows the
+   morph; the blur itself stays fixed, which keeps it smooth. */
+.dialog::backdrop {
+  background: rgb(210 210 215 / 0.45);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  backdrop-filter: blur(24px) saturate(180%);
+  opacity: var(--veil, 1);
+}
+
+/* ---------- Close button ---------- */
+
+.close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgb(232 232 237 / 0.8);
+  -webkit-backdrop-filter: blur(12px) saturate(180%);
+  backdrop-filter: blur(12px) saturate(180%);
+  color: var(--label-2);
+  transition:
+    background-color var(--spring-smooth),
+    color var(--spring-smooth);
+}
+
+.close:hover {
+  background: rgb(220 220 226 / 0.9);
+  color: var(--label);
+}
+
+.close svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* Only seen if the project wasn't prefetched yet: holds a calm, pane-sized space. */
+.pending {
+  min-height: 200px;
+}

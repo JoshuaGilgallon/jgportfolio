@@ -1,0 +1,88 @@
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+  gap: 12px;
+}
+
+.card {
+  --r: var(--r-lg);
+  display: flex;
+  flex-direction: column;
+  min-height: 196px;
+  padding: 22px 20px 20px 24px;
+  background: var(--fill);
+  transition: background-color var(--spring-smooth);
+}
+
+.card:hover,
+.card[data-hover] {
+  background: var(--fill-hover);
+}
+
+.year {
+  margin-bottom: 30px;
+  font-size: 12px;
+  line-height: 20px;
+  color: var(--label-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.title {
+  padding-right: 4px;
+  font-size: 19px;
+  line-height: 1.21053;
+  font-weight: 600;
+  letter-spacing: -0.006em;
+}
+
+.summary {
+  margin-top: 6px;
+  padding-right: 4px;
+  font-size: 15px;
+  line-height: 1.46667;
+  color: var(--label-2);
+}
+
+/* Stack on the left, the "+" on the right, both pinned to the bottom. */
+.foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: auto;
+  padding-top: 20px;
+}
+
+.tags {
+  min-width: 0;
+  font-size: 13px;
+  word-spacing: 0.12em;
+  color: var(--label-3);
+}
+
+.plus {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--fill-strong);
+  color: var(--label);
+  transition:
+    background-color var(--spring-smooth),
+    color var(--spring-smooth),
+    transform var(--spring);
+}
+
+.plus svg {
+  width: 18px;
+  height: 18px;
+}
+
+.card:hover .plus,
+.card[data-hover] .plus {
+  background: var(--label);
+  color: var(--bg);
+  transform: scale(1.06);
+}

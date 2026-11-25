@@ -1,0 +1,111 @@
+.list {
+  --r: var(--r-lg);
+  overflow: hidden;
+  background: var(--fill);
+}
+
+.item {
+  position: relative;
+}
+
+/* Inset separator, drawn above every row but the first. */
+.item + .item::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 20px;
+  right: 0;
+  height: 1px;
+  background: var(--separator);
+  transform: scaleY(0.5);
+  transform-origin: top;
+  transition: opacity var(--spring-smooth);
+}
+
+@media (max-resolution: 1dppx) {
+  .item + .item::before {
+    transform: none;
+  }
+}
+
+/* Like iOS, the hairlines around a highlighted row disappear. */
+.item:has(a:hover)::before,
+.item:has(a:hover) + .item::before {
+  opacity: 0;
+}
+
+.row {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  min-height: 44px;
+  padding: 14px 20px;
+  transition: background-color var(--spring-smooth);
+}
+
+a.row:hover {
+  background: var(--fill-hover);
+}
+
+.row:focus-visible {
+  outline-offset: -3px;
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.title {
+  font-weight: 500;
+}
+
+.external {
+  display: inline-block;
+  width: 15px;
+  height: 15px;
+  margin-left: 3px;
+  vertical-align: -1px;
+  color: var(--label-3);
+}
+
+.subtitle {
+  word-spacing: 0.06em;
+  font-size: 15px;
+  line-height: 1.4;
+  letter-spacing: 0;
+  color: var(--label-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.meta {
+  flex: none;
+  font-size: 15px;
+  letter-spacing: 0;
+  color: var(--label-3);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Narrow screens: give the title the full width and move the date below it. */
+@media (max-width: 520px) {
+  .row {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .subtitle {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    white-space: normal;
+  }
+
+  .meta {
+    font-size: 13px;
+  }
+}

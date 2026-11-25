@@ -1,0 +1,111 @@
+.main {
+  display: grid;
+  place-items: center;
+  min-height: 100dvh;
+  padding: 24px var(--gutter) 12vh;
+  background: var(--bg);
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 340px;
+  text-align: center;
+}
+
+.mark {
+  --r: calc(56px * 0.2237);
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  background: var(--label);
+  color: var(--bg);
+  font-size: 30px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.title {
+  margin-top: 20px;
+  font-size: 28px;
+  line-height: 1.14;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.subtitle {
+  margin-top: 6px;
+  font-size: 15px;
+  letter-spacing: 0;
+  color: var(--label-2);
+}
+
+.form {
+  width: 100%;
+  margin-top: 28px;
+}
+
+/* Two fields in one rounded group, divided by a hairline: the iOS sign-in form. */
+.fields {
+  --r: var(--r-md);
+  overflow: hidden;
+  background: var(--fill);
+  transition: box-shadow var(--spring-smooth);
+}
+
+.fields:focus-within {
+  box-shadow: 0 0 0 3px var(--focus);
+}
+
+.input {
+  display: block;
+  width: 100%;
+  height: 50px;
+  padding: 0 16px;
+  border: 0;
+  background: transparent;
+  outline: none;
+  font-size: 17px;
+}
+
+.input ~ .input {
+  border-top: 1px solid var(--separator);
+}
+
+.input::placeholder {
+  color: var(--label-3);
+}
+
+.error {
+  min-height: 20px;
+  margin: 10px 0 6px;
+  font-size: 14px;
+  letter-spacing: 0;
+  color: var(--danger);
+}
+
+.submit {
+  width: 100%;
+  height: 50px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--accent-fill);
+  color: var(--on-accent);
+  font-size: 17px;
+  font-weight: 500;
+  transition:
+    background-color var(--spring-smooth),
+    opacity var(--spring-smooth);
+}
+
+.submit:hover {
+  background: color-mix(in srgb, var(--accent-fill) 88%, #000);
+}
+
+.submit:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
