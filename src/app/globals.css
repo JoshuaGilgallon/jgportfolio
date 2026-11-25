@@ -90,8 +90,21 @@ html {
   scroll-padding-top: calc(var(--nav-h) + 24px);
 }
 
+/* Scrollbars: slim and quiet, a grey pill on a clear track (page, code
+   blocks, text areas). The project pane draws its own; see scrollbar.tsx. */
+:root {
+  scrollbar-color: rgb(0 0 0 / 0.22) transparent;
+}
+
+* {
+  scrollbar-width: thin;
+}
+
 html:has(dialog[open]) {
   overflow: hidden;
+  /* The scrollbar strip kept by scrollbar-gutter sits outside the
+     backdrop; give it the backdrop's tint as it fades in. */
+  background: color-mix(in srgb, rgb(210 210 215) calc(var(--veil, 1) * 45%), var(--bg));
 }
 
 body {
@@ -161,6 +174,7 @@ select {
 
 button {
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 
 ::selection {

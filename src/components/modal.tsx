@@ -3,12 +3,17 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { frameOf, MorphAnimation, type Frame } from "@/lib/morph";
+import { morph as morphSettings, Spring } from "@/lib/spring";
 import s from "./modal.module.css";
+import { Scrollbar } from "./scrollbar";
 
 /** Set to true for AnimationKit's "pivot" variant (a J-shaped flight). */
 const PIVOT = false;
 /** Blur of content as it dissolves, at its strongest. */
 const MAX_BLUR = 16;
+/** Pull the pane down this far (px), or flick it, and letting go closes it. */
+const DISMISS_DISTANCE = 140;
+const DISMISS_SPEED = 700;
 /** Outgoing content grows with the shape as it dissolves, up to Apple's largest blur-out scale. */
 const BLUR_OUT_SCALE = 1.65;
 
@@ -64,13 +69,18 @@ export function Modal({ children, labelledBy }: { children: React.ReactNode; lab
       veil = dialog.animate({ opacity: [0, 1] }, { pseudoElement: "::backdrop", duration: 1000, fill: "both" });
       veil.pause();
     } catch {}
+    // The root carries it too, to tint the reserved scrollbar strip that
+    // the backdrop can't reach (see globals.css).
+    const root = document.documentElement;
     const setVeil = (v: number) => {
       if (veil) veil.currentTime = v * 1000;
       else dialog.style.setProperty("--veil", String(v));
+      root.style.setProperty("--veil", String(v));
     };
     const dropVeil = () => {
       veil?.cancel();
       dialog.style.removeProperty("--veil");
+      root.style.removeProperty("--veil");
     };
     setVeil(reduceMotion ? 1 : 0);
 
@@ -135,7 +145,7 @@ export function Modal({ children, labelledBy }: { children: React.ReactNode; lab
       if (!card) return;
       const copy = document.createElement("div");
       copy.className = card.className;
-      if (card.matches(":hover")) copy.dataset.hover = "";
+      if (matchMedia("(hover: hover)").matches && card.matches(":hover")) copy.dataset.hover = "";
       copy.append(...card.cloneNode(true).childNodes);
       copy.style.cssText = `width:${card.offsetWidth}px;height:${card.offsetHeight}px;background:transparent`;
       ghost.append(copy);
@@ -145,6 +155,9 @@ export function Modal({ children, labelledBy }: { children: React.ReactNode; lab
     };
 
     // ---- Drawing ----
+
+    /** Below 1 while a pull-to-dismiss has already faded the page in. */
+    let veilScale = 1;
 
     const morph = new MorphAnimation();
     morph.pivot = PIVOT;
@@ -178,7 +191,7 @@ export function Modal({ children, labelledBy }: { children: React.ReactNode; lab
       // The card's dark "+" would linger as a smudge, so it leaves first.
       if (ghostPlus) ghostPlus.style.opacity = String(morph.sourceOpacity ** 3);
       closeButton.style.opacity = String(morph.targetOpacity);
-      setVeil(p);
+      setVeil(p * veilScale);
     };
 
     /** Hands the pane back to its stylesheet once it has landed. */
@@ -246,9 +259,11 @@ export function Modal({ children, labelledBy }: { children: React.ReactNode; lab
 
     // ---- Close ----
 
-    closeFn.current = () => {
+    /** `fling`: where (and how fast) a pull-to-dismiss let go of the pane. */
+    const close = (fling?: { dy: number; v: number }) => {
       if (closing) return;
       closing = true;
+      cancelAnimationFrame(pullFrame);
       if (!("morphing" in dialog.dataset)) {
         // At rest: measure the pane as it is now (its content may have
         // scrolled or grown) and start the morph from there.
@@ -261,14 +276,101 @@ export function Modal({ children, labelledBy }: { children: React.ReactNode; lab
       if (card) card.style.visibility = "hidden";
       fillGhost();
       aim();
+      if (fling) morph.nudge(0, fling.dy, 0, fling.v);
       morph.collapse();
       draw();
       run();
     };
+    closeFn.current = () => close();
+
+    // ---- Pull down to dismiss (touch) ----
+    // As with an iOS sheet: with the content scrolled to the top, dragging
+    // down moves the pane with the finger and lets the page show through.
+    // Let go far or fast enough and it morphs home carrying the finger's
+    // speed; otherwise it springs back into place.
+
+    type Pull = { x: number; y: number; from: number; dy: number; v: number; t: number; engaged: boolean };
+    let pull: Pull | null = null;
+    let pullFrame = 0;
+    const settleBack = new Spring();
+
+    const setPull = (dy: number) => {
+      panel.style.transform = dy > 0.25 ? `translate3d(0,${dy}px,0)` : "";
+      veilScale = 1 - 0.5 * Math.min(1, dy / Math.max(1, panel.offsetHeight));
+      setVeil(veilScale);
+    };
+
+    const onTouchStart = (e: TouchEvent) => {
+      if (closing || "morphing" in dialog.dataset || e.touches.length !== 1) return;
+      cancelAnimationFrame(pullFrame);
+      const t = e.touches[0];
+      const from = settleBack.x > 0.25 ? settleBack.x : 0;
+      pull = { x: t.clientX, y: t.clientY, from, dy: from, v: 0, t: e.timeStamp, engaged: from > 0 };
+    };
+
+    const onTouchMove = (e: TouchEvent) => {
+      if (!pull || closing) return;
+      const t = e.touches[0];
+      const dx = t.clientX - pull.x;
+      const dy = t.clientY - pull.y;
+      if (!pull.engaged) {
+        // Only a downward drag that starts with the content at its top;
+        // anything else is an ordinary scroll (or a sideways code block).
+        if (scroll.scrollTop > 0 || dy <= 0 || Math.abs(dx) > Math.abs(dy)) {
+          if (Math.hypot(dx, dy) > 8) pull = null;
+          return;
+        }
+        if (dy < 6) return;
+        pull.engaged = true;
+        pull.y += 6; // the slop before it engaged isn't part of the pull
+      }
+      e.preventDefault();
+      const offset = Math.max(0, pull.from + t.clientY - pull.y);
+      const dt = Math.max(1, e.timeStamp - pull.t);
+      pull.v = 0.6 * ((offset - pull.dy) / dt) * 1000 + 0.4 * pull.v;
+      pull.dy = offset;
+      pull.t = e.timeStamp;
+      setPull(offset);
+    };
+
+    const onTouchEnd = (e: TouchEvent) => {
+      const p = pull;
+      pull = null;
+      if (!p?.engaged) return;
+      // A finger that stopped before lifting has no speed left to carry.
+      if (e.timeStamp - p.t > 80) p.v = 0;
+      if (p.dy > DISMISS_DISTANCE || (p.v > DISMISS_SPEED && p.dy > 16)) return close({ dy: p.dy, v: p.v });
+      settleBack.x = p.dy;
+      settleBack.v = p.v;
+      settleBack.target = 0;
+      let last = 0;
+      const step = (now: number) => {
+        const dt = last ? Math.min((now - last) / 1000, 1 / 30) : 1 / 60;
+        last = now;
+        settleBack.step(dt, morphSettings.grow);
+        if (settleBack.settled(0.1)) {
+          settleBack.snap(0);
+          return setPull(0);
+        }
+        setPull(Math.max(0, settleBack.x));
+        pullFrame = requestAnimationFrame(step);
+      };
+      pullFrame = requestAnimationFrame(step);
+    };
+
+    scroll.addEventListener("touchstart", onTouchStart, { passive: true });
+    scroll.addEventListener("touchmove", onTouchMove, { passive: false });
+    scroll.addEventListener("touchend", onTouchEnd);
+    scroll.addEventListener("touchcancel", onTouchEnd);
 
     return () => {
       closeFn.current = null;
       cancelAnimationFrame(frame);
+      cancelAnimationFrame(pullFrame);
+      scroll.removeEventListener("touchstart", onTouchStart);
+      scroll.removeEventListener("touchmove", onTouchMove);
+      scroll.removeEventListener("touchend", onTouchEnd);
+      scroll.removeEventListener("touchcancel", onTouchEnd);
       resize.disconnect();
       settle();
       dialog.close();
@@ -303,6 +405,7 @@ export function Modal({ children, labelledBy }: { children: React.ReactNode; lab
         <div ref={scrollRef} className={s.scroll}>
           <div>{children}</div>
         </div>
+        <Scrollbar target={scrollRef} flash={850} />
         <button ref={closeRef} type="button" className={s.close} onClick={close} aria-label="Close">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" aria-hidden>
             <path d="M7.5 7.5l9 9M16.5 7.5l-9 9" />

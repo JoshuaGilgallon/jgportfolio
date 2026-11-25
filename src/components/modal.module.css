@@ -18,6 +18,7 @@
   overflow: visible;
   background: transparent;
   color: var(--label);
+  outline: none;
 }
 
 /* ---------- Pane ---------- */
@@ -34,8 +35,8 @@
   max-height: calc(100dvh - 80px);
   overflow: clip;
   background: var(--bg);
+  /* Shadow only, no outline: the pane is defined by the light around it. */
   box-shadow:
-    0 0 0 0.5px rgb(0 0 0 / calc(0.06 * var(--lift))),
     0 12px 32px rgb(0 0 0 / calc(0.08 * var(--lift))),
     0 40px 100px rgb(0 0 0 / calc(0.16 * var(--lift)));
 }
@@ -47,7 +48,19 @@
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
+  /* The native scrollbar gives way to the overlay one (scrollbar.tsx). */
+  scrollbar-width: none;
   padding: clamp(32px, 7vw, 64px) var(--gutter) clamp(40px, 7vw, 64px);
+}
+
+.scroll::-webkit-scrollbar {
+  display: none;
+}
+
+/* It takes focus when the pane opens, so arrow keys and Space scroll it
+   straight away; the whole pane is the focused thing, so no ring. */
+.scroll:focus-visible {
+  outline: none;
 }
 
 /* Keep the title clear of the close button. */
@@ -113,9 +126,18 @@
     color var(--spring-smooth);
 }
 
-.close:hover {
-  background: rgb(220 220 226 / 0.9);
-  color: var(--label);
+/* 44 px to the finger (Apple's minimum target), 36 px to the eye. */
+.close::before {
+  content: "";
+  position: absolute;
+  inset: -4px;
+}
+
+@media (hover: hover) {
+  .close:hover {
+    background: rgb(220 220 226 / 0.9);
+    color: var(--label);
+  }
 }
 
 .close svg {

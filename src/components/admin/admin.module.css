@@ -53,8 +53,10 @@
   transition: color var(--spring-smooth);
 }
 
-.barLink:hover {
-  color: var(--label);
+@media (hover: hover) {
+  .barLink:hover {
+    color: var(--label);
+  }
 }
 
 .barLink svg {
@@ -153,8 +155,10 @@
     opacity var(--spring-smooth);
 }
 
-.primary:hover {
-  background: color-mix(in srgb, var(--accent-fill) 88%, #000);
+@media (hover: hover) {
+  .primary:hover {
+    background: color-mix(in srgb, var(--accent-fill) 88%, #000);
+  }
 }
 
 .primary:disabled {
@@ -205,8 +209,10 @@
   transition: background-color var(--spring-smooth);
 }
 
-.row:hover {
-  background: var(--fill-hover);
+@media (hover: hover) {
+  .row:hover {
+    background: var(--fill-hover);
+  }
 }
 
 .row:focus-visible {
@@ -261,9 +267,11 @@
     color var(--spring-smooth);
 }
 
-.moveButton:hover:not(:disabled) {
-  background: var(--fill-strong);
-  color: var(--label);
+@media (hover: hover) {
+  .moveButton:hover:not(:disabled) {
+    background: var(--fill-strong);
+    color: var(--label);
+  }
 }
 
 .moveButton:disabled {
@@ -324,10 +332,12 @@
   color: var(--accent);
 }
 
-.back:hover,
-.viewLink:hover {
-  text-decoration: underline;
-  text-underline-offset: 3px;
+@media (hover: hover) {
+  .back:hover,
+  .viewLink:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
 }
 
 .form {
@@ -572,9 +582,14 @@
   transition: background-color var(--spring-smooth);
 }
 
-.danger:hover,
 .dangerArmed {
   background: color-mix(in srgb, var(--danger) 12%, transparent);
+}
+
+@media (hover: hover) {
+  .danger:hover {
+    background: color-mix(in srgb, var(--danger) 12%, transparent);
+  }
 }
 
 /* "Saved" fades away on its own; no timers needed. */

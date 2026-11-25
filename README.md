@@ -79,7 +79,13 @@ minutes (the `content` profile in `next.config.ts`), which caps that.
   closing morphs it back into its slot. It uses an intercepted route
   (`src/app/(site)/@modal`) and the native `<dialog>`. The URL changes, so
   the link is shareable, Back closes it, and a refresh shows the full
-  `/projects/[slug]` page.
+  `/projects/[slug]` page. On touch screens you can also pull the pane down
+  to dismiss it, as with an iOS sheet. It has its own overlay scrollbar
+  (`src/components/scrollbar.tsx`): a slim pill that shows while
+  scrolling, widens to be dragged with a mouse, and stays out of the way of
+  swipes. Everywhere else, scrollbars are thin and quiet.
+- **Touch.** Hover effects only apply on devices that can hover, so they
+  don't stick after a tap; presses get the same highlight instead.
 - **Motion.** Animations use Apple's own springs, ported from the Liquid
   Glass research library. `src/lib/morph.ts` is AnimationKit's liquid
   morph, stepped every frame: grow 0.8/0.3, shrink 0.9/0.3, content blurs

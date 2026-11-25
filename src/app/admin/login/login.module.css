@@ -101,8 +101,10 @@
     opacity var(--spring-smooth);
 }
 
-.submit:hover {
-  background: color-mix(in srgb, var(--accent-fill) 88%, #000);
+@media (hover: hover) {
+  .submit:hover {
+    background: color-mix(in srgb, var(--accent-fill) 88%, #000);
+  }
 }
 
 .submit:disabled {

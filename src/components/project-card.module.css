@@ -14,9 +14,15 @@
   transition: background-color var(--spring-smooth);
 }
 
-.card:hover,
-.card[data-hover] {
+.card[data-hover],
+.card:active {
   background: var(--fill-hover);
+}
+
+@media (hover: hover) {
+  .card:hover {
+    background: var(--fill-hover);
+  }
 }
 
 .year {
@@ -25,6 +31,17 @@
   line-height: 20px;
   color: var(--label-3);
   font-variant-numeric: tabular-nums;
+}
+
+/* Phones stack the cards, so they don't need to hold a tile's height. */
+@media (max-width: 520px) {
+  .card {
+    min-height: 0;
+  }
+
+  .year {
+    margin-bottom: 14px;
+  }
 }
 
 .title {
@@ -80,9 +97,16 @@
   height: 18px;
 }
 
-.card:hover .plus,
 .card[data-hover] .plus {
   background: var(--label);
   color: var(--bg);
   transform: scale(1.06);
+}
+
+@media (hover: hover) {
+  .card:hover .plus {
+    background: var(--label);
+    color: var(--bg);
+    transform: scale(1.06);
+  }
 }

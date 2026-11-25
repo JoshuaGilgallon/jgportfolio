@@ -52,6 +52,8 @@
   transition: color var(--spring-smooth);
 }
 
-.link:hover {
-  color: var(--label);
+@media (hover: hover) {
+  .link:hover {
+    color: var(--label);
+  }
 }

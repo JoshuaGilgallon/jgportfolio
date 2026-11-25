@@ -59,7 +59,14 @@
   transition: background-color var(--spring-smooth);
 }
 
-.button:hover {
+@media (hover: hover) {
+  .button:hover {
+    background: var(--fill-hover);
+  }
+}
+
+/* Touch has no hover, so a press shows the same highlight. */
+.button:active {
   background: var(--fill-hover);
 }
 
@@ -68,8 +75,14 @@
   color: var(--on-accent);
 }
 
-.primary:hover {
+.primary:active {
   background: color-mix(in srgb, var(--accent-fill) 88%, #000);
+}
+
+@media (hover: hover) {
+  .primary:hover {
+    background: color-mix(in srgb, var(--accent-fill) 88%, #000);
+  }
 }
 
 .button svg {

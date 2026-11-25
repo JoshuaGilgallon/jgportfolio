@@ -27,9 +27,11 @@
   color: var(--accent);
 }
 
-.link:hover {
-  text-decoration: underline;
-  text-underline-offset: 3px;
+@media (hover: hover) {
+  .link:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
 }
 
 .inline {

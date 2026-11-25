@@ -28,9 +28,11 @@
   }
 }
 
-.item:has(.row:hover)::before,
-.item:has(.row:hover) + .item::before {
-  opacity: 0;
+@media (hover: hover) {
+  .item:has(.row:hover)::before,
+  .item:has(.row:hover) + .item::before {
+    opacity: 0;
+  }
 }
 
 .row {
@@ -46,7 +48,13 @@
   transition: background-color var(--spring-smooth);
 }
 
-.row:hover {
+@media (hover: hover) {
+  .row:hover {
+    background: var(--fill-hover);
+  }
+}
+
+.row:active {
   background: var(--fill-hover);
 }
 

@@ -70,6 +70,18 @@ export class MorphAnimation {
     this.delay = 0;
   }
 
+  /**
+   * Moves the shape off its spring by (dx, dy) px, travelling at (vx, vy)
+   * px/s of real time: e.g. where a finger let go of it. The springs carry
+   * on from there with that velocity.
+   */
+  nudge(dx: number, dy: number, vx = 0, vy = 0) {
+    this.px.x += dx;
+    this.py.x += dy;
+    this.px.v = vx / morph.speed;
+    this.py.v = vy / morph.speed;
+  }
+
   expand() {
     this.go(true);
   }

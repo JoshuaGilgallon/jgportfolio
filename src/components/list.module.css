@@ -29,9 +29,11 @@
 }
 
 /* Like iOS, the hairlines around a highlighted row disappear. */
-.item:has(a:hover)::before,
-.item:has(a:hover) + .item::before {
-  opacity: 0;
+@media (hover: hover) {
+  .item:has(a:hover)::before,
+  .item:has(a:hover) + .item::before {
+    opacity: 0;
+  }
 }
 
 .row {
@@ -43,7 +45,13 @@
   transition: background-color var(--spring-smooth);
 }
 
-a.row:hover {
+@media (hover: hover) {
+  a.row:hover {
+    background: var(--fill-hover);
+  }
+}
+
+a.row:active {
   background: var(--fill-hover);
 }
 

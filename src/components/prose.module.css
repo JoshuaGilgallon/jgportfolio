@@ -47,8 +47,10 @@
   transition: text-decoration-color var(--spring-smooth);
 }
 
-.prose a:hover {
-  text-decoration-color: currentColor;
+@media (hover: hover) {
+  .prose a:hover {
+    text-decoration-color: currentColor;
+  }
 }
 
 .prose strong {
