@@ -11,6 +11,13 @@
   color: var(--label-3);
 }
 
+/* Room to scroll the footer clear of the home page's floating button. */
+@media (max-width: 860px) {
+  :global(html[data-home]) .footer {
+    padding-bottom: calc(96px + env(safe-area-inset-bottom));
+  }
+}
+
 .link {
   transition: color var(--spring-smooth);
 }

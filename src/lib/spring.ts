@@ -48,8 +48,12 @@ export class Spring {
 export const morph = {
   /** Global time scale: every morph runs at 0.7× real time. */
   speed: 0.7,
-  /** Button → menu: position and size. */
-  grow: { damping: 0.8, response: 0.3 },
+  /**
+   * Button → menu: position and size. AnimationKit uses 0.8/0.3; this is
+   * critically damped so the pane lands without overshooting, with the
+   * response shortened to keep the same pace off the mark.
+   */
+  grow: { damping: 1, response: 0.26 },
   /** Menu → button. */
   shrink: { damping: 0.9, response: 0.3 },
   /** Old content blurs away. */
@@ -57,6 +61,7 @@ export const morph = {
   /** New content blurs in, a beat later. */
   blurIn: { damping: 1, response: 0.3 },
   secondStepDelay: 0.03,
-  kickGrow: { damping: 0.8, response: 0.35 },
   kickShrink: { damping: 0.8, response: 0.5 },
+  /** A pull-to-dismiss let go too early, springing back into place. */
+  pullBack: { damping: 0.8, response: 0.3 },
 } satisfies Record<string, SpringSpec | number>;

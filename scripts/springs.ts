@@ -53,5 +53,6 @@ console.log(
   [
     token("spring-smooth", { damping: 1, response: 0.3 }, "AnimationKit blurIn, critically damped"),
     token("spring", { damping: 0.8, response: 0.3 }, "AnimationKit liquidMorph"),
+    token("spring-nav", { damping: 1, response: 0.3 }, "UIKit fluid navigation push and pop"),
   ].join("\n"),
 );

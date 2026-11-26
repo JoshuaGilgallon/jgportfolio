@@ -1,10 +1,12 @@
 import { ContactList } from "@/components/contact-list";
+import { HomeNav } from "@/components/home-nav";
 import { List, Row } from "@/components/list";
 import { ProjectCard, ProjectGrid } from "@/components/project-card";
 import { Section } from "@/components/section";
 import { TextLink } from "@/components/text-link";
 import { getLinks, getPosts, getProjects, getPublications } from "@/lib/content";
 import { formatDate } from "@/lib/format";
+import { homeSections } from "@/lib/sections";
 import s from "./home.module.css";
 
 const RECENT_POSTS = 5;
@@ -91,6 +93,10 @@ export default async function Home() {
           <ContactList links={links} />
         </Section>
       )}
+
+      <HomeNav
+        sections={homeSections({ projects: projects.length, posts: posts.length, links: links.length })}
+      />
     </>
   );
 }

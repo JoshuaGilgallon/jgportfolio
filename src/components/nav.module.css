@@ -23,6 +23,13 @@
   }
 }
 
+/* On the home page the bar scrolls away with the page, and a floating button
+   takes over (home-nav.tsx). */
+:global(html[data-home]) .bar {
+  position: relative;
+  animation: none;
+}
+
 .inner {
   display: flex;
   align-items: center;

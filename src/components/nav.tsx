@@ -1,17 +1,14 @@
 import Link from "next/link";
 import { getLinks, getPosts, getProjects } from "@/lib/content";
+import { homeSections } from "@/lib/sections";
 import s from "./nav.module.css";
 
 export async function Nav() {
   const [projects, posts, links] = await Promise.all([getProjects(), getPosts(), getLinks()]);
-  const items = [
-    projects.length > 0 && { href: "/#projects", label: "Projects" },
-    posts.length > 0 && { href: "/#writing", label: "Writing" },
-    links.length > 0 && { href: "/#contact", label: "Contact" },
-  ].filter(Boolean) as { href: string; label: string }[];
+  const items = homeSections({ projects: projects.length, posts: posts.length, links: links.length });
 
   return (
-    <header className={s.bar}>
+    <header className={s.bar} data-site-nav>
       <div className={`page ${s.inner}`}>
         <Link href="/" className={s.name}>
           Josh
@@ -20,8 +17,8 @@ export async function Nav() {
           <nav aria-label="Primary">
             <ul className={s.links}>
               {items.map((item) => (
-                <li key={item.href}>
-                  <Link href={item.href} className={s.link}>
+                <li key={item.id}>
+                  <Link href={`/#${item.id}`} className={s.link}>
                     {item.label}
                   </Link>
                 </li>

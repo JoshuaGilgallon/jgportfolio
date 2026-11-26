@@ -1,0 +1,221 @@
+/* The home page's floating button and the sheet it becomes (home-nav.tsx). */
+
+.button,
+.hint,
+.dialog {
+  --size: 56px;
+  --edge: 20px;
+}
+
+/* ---------- Button ---------- */
+
+/* Blurs in and out on the same critically damped spring as the morph's
+   content (--spring-smooth). */
+.button {
+  position: fixed;
+  right: var(--edge);
+  bottom: calc(var(--edge) + env(safe-area-inset-bottom));
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  width: var(--size);
+  height: var(--size);
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--bg);
+  /* The sheet starts from this same shadow, so the hand-over doesn't show. */
+  box-shadow:
+    0 6px 20px rgb(0 0 0 / 0.12),
+    0 0 0 0.5px rgb(0 0 0 / 0.1);
+  color: var(--label);
+  visibility: hidden;
+  opacity: 0;
+  filter: blur(12px);
+  transform: scale(0.6);
+  transition:
+    opacity var(--spring-smooth),
+    filter var(--spring-smooth),
+    transform var(--spring-smooth),
+    visibility var(--spring-smooth);
+}
+
+.button[data-shown] {
+  visibility: visible;
+  opacity: 1;
+  filter: none;
+  transform: none;
+}
+
+/* While the sheet is out, the button is the sheet. */
+.button[data-away] {
+  visibility: hidden;
+  transition: none;
+}
+
+/* ---------- First-time hint ---------- */
+
+.hint {
+  position: fixed;
+  right: var(--edge);
+  bottom: calc(var(--edge) + var(--size) + 14px + env(safe-area-inset-bottom));
+  z-index: 20;
+  max-width: calc(100vw - var(--edge) * 2);
+  margin: 0;
+  padding: 10px 16px;
+  border-radius: 16px;
+  background: var(--label);
+  color: var(--bg);
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: 0;
+  box-shadow: 0 6px 20px rgb(0 0 0 / 0.16);
+  pointer-events: none;
+  visibility: hidden;
+  opacity: 0;
+  filter: blur(12px);
+  transform: translateY(6px) scale(0.94);
+  transform-origin: bottom right;
+  transition:
+    opacity var(--spring-smooth),
+    filter var(--spring-smooth),
+    transform var(--spring-smooth),
+    visibility var(--spring-smooth);
+}
+
+/* A tail pointing down at the middle of the button. */
+.hint::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  right: calc(var(--size) / 2 - 7px);
+  border: 7px solid transparent;
+  border-bottom: 0;
+  border-top-color: var(--label);
+}
+
+.hint[data-shown] {
+  visibility: visible;
+  opacity: 1;
+  filter: none;
+  transform: none;
+}
+
+/* ---------- Sheet ---------- */
+
+/* A clear layer over the screen that sets the sheet along the bottom edge. */
+.dialog[open] {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  width: auto;
+  height: auto;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 10px 10px calc(10px + env(safe-area-inset-bottom));
+  border: 0;
+  overflow: visible;
+  background: transparent;
+  color: var(--label);
+  outline: none;
+}
+
+.panel {
+  --r: 30px;
+  --lift: 1;
+  position: relative;
+  width: min(400px, 100%);
+  overflow: clip;
+  background: var(--bg);
+  box-shadow:
+    0 6px 20px rgb(0 0 0 / 0.12),
+    0 24px 60px rgb(0 0 0 / calc(0.14 * var(--lift))),
+    0 0 0 0.5px rgb(0 0 0 / 0.1);
+  outline: none;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+}
+
+.list {
+  --r: 20px;
+  overflow: clip;
+  background: var(--fill);
+}
+
+.item + .item {
+  border-top: 1px solid var(--separator);
+}
+
+.link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 56px;
+  padding: 0 16px 0 20px;
+  font-size: 19px;
+  font-weight: 500;
+  letter-spacing: -0.006em;
+  transition: background-color var(--spring-smooth);
+}
+
+.link:focus-visible {
+  outline-offset: -3px;
+}
+
+.chevron {
+  width: 18px;
+  height: 18px;
+  color: var(--label-3);
+}
+
+.done {
+  --r: 18px;
+  min-height: 50px;
+  border: 0;
+  background: var(--fill);
+  font-size: 17px;
+  font-weight: 600;
+  transition: background-color var(--spring-smooth);
+}
+
+@media (hover: hover) {
+  .link:hover,
+  .done:hover {
+    background: var(--fill-hover);
+  }
+}
+
+.link:active,
+.done:active {
+  background: var(--fill-strong);
+}
+
+/* The button's own icon, dissolving as the sheet takes its place. */
+.ghost {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.dialog[data-morphing] :is(.panel, .content, .ghost) {
+  will-change: transform, opacity, filter;
+}
+
+/* The same frosted veil as the project pane, a little lighter. */
+.dialog::backdrop {
+  background: rgb(210 210 215 / 0.45);
+  -webkit-backdrop-filter: blur(12px) saturate(180%);
+  backdrop-filter: blur(12px) saturate(180%);
+  opacity: var(--veil, 1);
+}

@@ -16,11 +16,12 @@ const clamp = (x: number, lo = 0, hi = 1) => Math.min(hi, Math.max(lo, x));
  * spring values were read from AnimationKit's live MorphAnimationSettings.
  *
  * - The frame's position and size spring from the source to the target
- *   (grow 0.8/0.3, shrink 0.9/0.3), slightly under-damped, so it lands with a
- *   little follow-through.
+ *   (grow 1.0/0.26, shrink 0.9/0.3). Growing never overshoots; shrinking is
+ *   slightly under-damped, so it lands with a little follow-through.
  * - The old content blurs out (0.8/0.45) while the new content blurs in
  *   (1.0/0.3) 30 ms later.
- * - A "kick" impulse on a separate spring gives the size one soft bounce.
+ * - On the way back, a "kick" impulse on a separate spring gives the size one
+ *   soft bounce.
  * - Everything runs at AnimationKit's global speed, 0.7.
  *
  * Optional "pivot" mode is the library's flying variant: the shape first
@@ -110,7 +111,7 @@ export class MorphAnimation {
     this.out.step(dt, morph.blurOut);
     if (this.delay > 0) this.delay -= dt;
     else this.in.step(dt, morph.blurIn);
-    this.kick.step(dt, this.growing ? morph.kickGrow : morph.kickShrink);
+    this.kick.step(dt, morph.kickShrink);
   }
 
   get animating() {
@@ -173,7 +174,7 @@ export class MorphAnimation {
     this.out.target = grow ? 1 : 0;
     this.in.target = grow ? 1 : 0;
     this.delay = morph.secondStepDelay;
-    this.kick.v += grow ? 6 : -4;
+    if (!grow) this.kick.v -= 4;
     if (this.pivot) {
       // Stage 1: head for the intermediate frame on the J path.
       const from = this.shape;

@@ -48,6 +48,8 @@
   --spring-smooth: 508ms linear(0, 0.0076 0.82%, 0.0215 1.64%, 0.0403 2.46%, 0.0893 4.1%, 0.1479 5.74%, 0.3726 11.48%, 0.4623 13.93%, 0.5174 15.57%, 0.5683 17.21%, 0.6368 19.67%, 0.7137 22.95%, 0.776 26.23%, 0.8256 29.51%, 0.8732 33.61%, 0.9082 37.7%, 0.938 42.62%, 0.9609 48.36%, 0.977 54.92%, 0.9874 62.3%, 0.994 71.31%, 1);
   /* AnimationKit liquidMorph: damping 0.8, response 0.3s */
   --spring: 446ms linear(0, 0.0076 0.93%, 0.0217 1.87%, 0.0413 2.8%, 0.0934 4.67%, 0.1243 5.61%, 0.1926 7.48%, 0.4152 13.08%, 0.521 15.89%, 0.6167 18.69%, 0.7002 21.5%, 0.7712 24.3%, 0.8116 26.17%, 0.8469 28.04%, 0.8908 30.84%, 0.9349 34.58%, 0.9654 38.32%, 0.9855 42.06%, 0.9979 45.79%, 1.0061 50.47%, 1.0093 58.88%, 1);
+  /* UIKit fluid navigation push and pop: damping 1, response 0.3s */
+  --spring-nav: 508ms linear(0, 0.0076 0.82%, 0.0215 1.64%, 0.0403 2.46%, 0.0893 4.1%, 0.1479 5.74%, 0.3726 11.48%, 0.4623 13.93%, 0.5174 15.57%, 0.5683 17.21%, 0.6368 19.67%, 0.7137 22.95%, 0.776 26.23%, 0.8256 29.51%, 0.8732 33.61%, 0.9082 37.7%, 0.938 42.62%, 0.9609 48.36%, 0.977 54.92%, 0.9874 62.3%, 0.994 71.31%, 1);
 }
 
 /* ------------------------------------------------------------------
@@ -88,6 +90,11 @@ html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
   scroll-padding-top: calc(var(--nav-h) + 24px);
+}
+
+/* No sticky bar to clear on the home page (home-nav.tsx). */
+html[data-home] {
+  scroll-padding-top: 24px;
 }
 
 /* Scrollbars: slim and quiet, a grey pill on a clear track (page, code
@@ -217,4 +224,99 @@ button {
 
 .skip-link:focus-visible {
   transform: none;
+}
+
+/* ------------------------------------------------------------------
+   Page slides (phones)
+   page-transitions.tsx sets data-nav and starts a view transition; here
+   the two screen snapshots move as in a UIKit navigation controller. The
+   page on top travels the full width, the one underneath 30% of it and
+   dims a little, on UIKit's push spring. Only transform and opacity
+   animate, so the compositor does all of it.
+   ------------------------------------------------------------------ */
+
+/* Taps during a slide reach the page, so nothing feels locked. */
+html[data-nav]::view-transition {
+  pointer-events: none;
+}
+
+/* Black behind the page underneath is what dims it. */
+html[data-nav]::view-transition-group(root) {
+  animation: none;
+  background: #000;
+}
+
+html[data-nav]::view-transition-old(root),
+html[data-nav]::view-transition-new(root) {
+  background: var(--bg);
+  /* Two solid sheets, not the default crossfade. */
+  mix-blend-mode: normal;
+}
+
+html[data-nav="push"]::view-transition-old(root) {
+  animation: nav-cover var(--spring-nav) both;
+}
+
+html[data-nav="push"]::view-transition-new(root) {
+  box-shadow: 0 0 32px rgb(0 0 0 / 0.16);
+  animation: nav-enter var(--spring-nav) both;
+}
+
+html[data-nav="pop"]::view-transition-old(root) {
+  z-index: 1;
+  box-shadow: 0 0 32px rgb(0 0 0 / 0.16);
+  animation: nav-leave var(--spring-nav) both;
+}
+
+html[data-nav="pop"]::view-transition-new(root) {
+  animation: nav-uncover var(--spring-nav) both;
+}
+
+/* Between pages whose bar is the same and stuck to the top, it simply stays
+   above them. (To or from the home page, where it scrolls away, it slides
+   with its page.) Its frosting can't see through a snapshot; a solid backing
+   stands in for the moment. Named here, because a CSS module would rename
+   "site-nav". */
+html[data-nav][data-bar="stays"] [data-site-nav] {
+  view-transition-name: site-nav;
+}
+
+html[data-nav]::view-transition-group(site-nav) {
+  z-index: 1;
+  animation: none;
+  background: var(--bg);
+}
+
+html[data-nav]::view-transition-old(site-nav) {
+  display: none;
+}
+
+html[data-nav]::view-transition-new(site-nav) {
+  animation: none;
+}
+
+@keyframes nav-enter {
+  from {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes nav-leave {
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes nav-cover {
+  to {
+    transform: translateX(-30%);
+    opacity: 0.9;
+  }
+}
+
+@keyframes nav-uncover {
+  from {
+    transform: translateX(-30%);
+    opacity: 0.9;
+  }
 }

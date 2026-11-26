@@ -79,18 +79,32 @@ minutes (the `content` profile in `next.config.ts`), which caps that.
   closing morphs it back into its slot. It uses an intercepted route
   (`src/app/(site)/@modal`) and the native `<dialog>`. The URL changes, so
   the link is shareable, Back closes it, and a refresh shows the full
-  `/projects/[slug]` page. On touch screens you can also pull the pane down
+  `/projects/[slug]` page. On phones the card grows to fill the screen
+  instead. On touch screens you can also pull the pane down
   to dismiss it, as with an iOS sheet. It has its own overlay scrollbar
   (`src/components/scrollbar.tsx`): a slim pill that shows while
   scrolling, widens to be dragged with a mouse, and stays out of the way of
   swipes. Everywhere else, scrollbars are thin and quiet.
+- **Page slides (phones).** Changing page slides the new one in from the
+  right, and going back slides it away again, on UIKit's fluid navigation
+  spring (damping 1.0, response 0.3s) via View Transitions
+  (`src/components/page-transitions.tsx`). `preloader.tsx` fetches whole
+  pages before they're tapped, from what's on screen and where a finger
+  lands. It passes `router.prefetch` the `kind` option, which Next types but
+  doesn't document, so check it after upgrading. Prefetching only runs in a
+  production build.
+- **Home navigation.** On the home page the top bar scrolls away with the
+  page and a round button blurs in at the bottom right
+  (`src/components/home-nav.tsx`). It morphs into a bottom sheet linking to
+  each section, using the same liquid morph as the project pane. A one-time
+  hint (remembered in `localStorage`) points it out.
 - **Touch.** Hover effects only apply on devices that can hover, so they
   don't stick after a tap; presses get the same highlight instead.
 - **Motion.** Animations use Apple's own springs, ported from the Liquid
   Glass research library. `src/lib/morph.ts` is AnimationKit's liquid
-  morph, stepped every frame: grow 0.8/0.3, shrink 0.9/0.3, content blurs
-  out 0.8/0.45 and blurs in 1.0/0.3 after 30 ms, plus a kick spring, all at
-  0.7× speed. Set `PIVOT` in `src/components/modal.tsx` for the slower
+  morph, stepped every frame: grow 1.0/0.26 (no overshoot), shrink 0.9/0.3,
+  content blurs out 0.8/0.45 and blurs in 1.0/0.3 after 30 ms, plus a kick
+  spring on the way back, all at 0.7× speed. Set `PIVOT` in `src/components/modal.tsx` for the slower
   J-path "flying" variant. The other transitions use `--spring` and
   `--spring-smooth` in `globals.css`. These are the same springs sampled
   into CSS `linear()` curves; regenerate them with

@@ -9,6 +9,7 @@ import s from "./scrollbar.module.css";
  * comes near), fades away when idle and widens to be dragged. The native
  * scrollbar of `target` is hidden in CSS; wheel, touch and keyboard
  * scrolling are untouched. Place it inside a positioned ancestor of target.
+ * `flash` is how long (ms) it stays up when it first appears.
  */
 export function Scrollbar({ target, flash = 0 }: { target: React.RefObject<HTMLElement | null>; flash?: number }) {
   const trackRef = useRef<HTMLDivElement>(null);
@@ -43,12 +44,12 @@ export function Scrollbar({ target, flash = 0 }: { target: React.RefObject<HTMLE
       frame ||= requestAnimationFrame(layout);
     };
 
-    const show = () => {
+    const show = (linger = 1000) => {
       track.dataset.active = "";
       clearTimeout(idle);
       idle = window.setTimeout(() => {
         if (!drag) delete track.dataset.active;
-      }, 1000);
+      }, linger);
     };
 
     const onScroll = () => {
@@ -88,10 +89,11 @@ export function Scrollbar({ target, flash = 0 }: { target: React.RefObject<HTMLE
     layout();
 
     // Like a fresh iOS scroll view, flash once so it's clear there's more.
+    // It waits one tick, for a parent that reveals the target in its effect.
     const flashTimer = window.setTimeout(() => {
       layout();
-      show();
-    }, flash);
+      if (flash > 0) show(flash);
+    });
 
     return () => {
       cancelAnimationFrame(frame);

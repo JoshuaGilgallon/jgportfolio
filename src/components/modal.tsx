@@ -14,6 +14,8 @@ const MAX_BLUR = 16;
 /** Pull the pane down this far (px), or flick it, and letting go closes it. */
 const DISMISS_DISTANCE = 140;
 const DISMISS_SPEED = 700;
+/** The most a full-screen pane's square corners round as it's pulled away. */
+const PULL_RADIUS = 24;
 /** Outgoing content grows with the shape as it dissolves, up to Apple's largest blur-out scale. */
 const BLUR_OUT_SCALE = 1.65;
 
@@ -38,6 +40,7 @@ export function Modal({ children, labelledBy }: { children: React.ReactNode; lab
   const panelRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const ghostRef = useRef<HTMLDivElement>(null);
+  const railRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const closeFn = useRef<(() => void) | null>(null);
   const router = useRouter();
@@ -47,8 +50,9 @@ export function Modal({ children, labelledBy }: { children: React.ReactNode; lab
     const panel = panelRef.current;
     const scroll = scrollRef.current;
     const ghost = ghostRef.current;
+    const rail = railRef.current;
     const closeButton = closeRef.current;
-    if (!dialog || !panel || !scroll || !ghost || !closeButton) return;
+    if (!dialog || !panel || !scroll || !ghost || !rail || !closeButton) return;
 
     // Return focus to whatever opened the modal ourselves, with preventScroll:
     // the dialog's built-in restore would scroll the page to reveal it.
@@ -188,6 +192,15 @@ export function Modal({ children, labelledBy }: { children: React.ReactNode; lab
       ghost.style.cssText =
         `opacity:${morph.sourceOpacity};filter:${blur(morph.sourceBlur)};` +
         `transform:scale(${Math.min(BLUR_OUT_SCALE, Math.max(1, f.w / ghostWidth))})`;
+      // The scrollbar dissolves with the content it belongs to. It keeps its
+      // resting height rather than being squeezed, and rides the pane's right
+      // edge: held to the top, the bottom or in between, as far as it's scrolled.
+      const overflow = scroll.scrollHeight - scroll.clientHeight;
+      const scrolled = overflow > 0 ? Math.min(1, Math.max(0, scroll.scrollTop / overflow)) : 0;
+      rail.style.cssText =
+        `position:absolute;z-index:1;top:0;right:0;width:16px;height:${restSize.h}px;` +
+        `transform:translateY(${(f.h - restSize.h) * scrolled}px);` +
+        `opacity:${morph.targetOpacity};filter:${blur(morph.targetBlur)}`;
       // The card's dark "+" would linger as a smudge, so it leaves first.
       if (ghostPlus) ghostPlus.style.opacity = String(morph.sourceOpacity ** 3);
       closeButton.style.opacity = String(morph.targetOpacity);
@@ -200,6 +213,7 @@ export function Modal({ children, labelledBy }: { children: React.ReactNode; lab
       scroll.style.cssText = "";
       ghost.style.cssText = "";
       ghost.replaceChildren();
+      rail.style.cssText = "";
       closeButton.style.opacity = "";
       setVeil(1);
       delete dialog.dataset.morphing;
@@ -267,7 +281,8 @@ export function Modal({ children, labelledBy }: { children: React.ReactNode; lab
       if (!("morphing" in dialog.dataset)) {
         // At rest: measure the pane as it is now (its content may have
         // scrolled or grown) and start the morph from there.
-        rest = restFrame();
+        const r = radiusOf(panel); // a pull may have rounded the corners
+        rest = { ...restFrame(), r };
         restSize = { w: rest.w, h: rest.h };
         dialog.dataset.morphing = "";
       }
@@ -296,6 +311,10 @@ export function Modal({ children, labelledBy }: { children: React.ReactNode; lab
 
     const setPull = (dy: number) => {
       panel.style.transform = dy > 0.25 ? `translate3d(0,${dy}px,0)` : "";
+      // A full-screen pane has square corners; they round as it comes away.
+      panel.style.removeProperty("--r");
+      const rounded = Math.min(PULL_RADIUS, dy);
+      if (rounded > radiusOf(panel)) panel.style.setProperty("--r", `${rounded}px`);
       veilScale = 1 - 0.5 * Math.min(1, dy / Math.max(1, panel.offsetHeight));
       setVeil(veilScale);
     };
@@ -347,7 +366,7 @@ export function Modal({ children, labelledBy }: { children: React.ReactNode; lab
       const step = (now: number) => {
         const dt = last ? Math.min((now - last) / 1000, 1 / 30) : 1 / 60;
         last = now;
-        settleBack.step(dt, morphSettings.grow);
+        settleBack.step(dt, morphSettings.pullBack);
         if (settleBack.settled(0.1)) {
           settleBack.snap(0);
           return setPull(0);
@@ -405,7 +424,10 @@ export function Modal({ children, labelledBy }: { children: React.ReactNode; lab
         <div ref={scrollRef} className={s.scroll}>
           <div>{children}</div>
         </div>
-        <Scrollbar target={scrollRef} flash={850} />
+        {/* Unstyled at rest; the morph sizes and fades it (see draw). */}
+        <div ref={railRef}>
+          <Scrollbar target={scrollRef} flash={1800} />
+        </div>
         <button ref={closeRef} type="button" className={s.close} onClick={close} aria-label="Close">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" aria-hidden>
             <path d="M7.5 7.5l9 9M16.5 7.5l-9 9" />
