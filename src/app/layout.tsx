@@ -30,7 +30,8 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en-GB" className={instrument.variable}>
+    // The home page adds data-home before hydration (components/home-nav.tsx).
+    <html lang="en-GB" className={instrument.variable} suppressHydrationWarning>
       <body>{children}</body>
     </html>
   );

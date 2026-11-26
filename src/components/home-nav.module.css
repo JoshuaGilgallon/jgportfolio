@@ -112,10 +112,15 @@
 
 /* ---------- Sheet ---------- */
 
-/* A clear layer over the screen that sets the sheet along the bottom edge. */
+/* A clear layer over the screen that sets the sheet along the bottom edge.
+   Safari on iOS 26 and later paints its status bar and toolbar a flat colour
+   when something fixed reaches the top or bottom of the viewport. So this
+   layer stops short of both (--clear), and the veil behind it scrolls with the
+   page instead of being fixed (see Veil, below). */
 .dialog[open] {
+  --clear: 8px; /* CLEAR in home-nav.tsx */
   position: fixed;
-  inset: 0;
+  inset: var(--clear);
   display: flex;
   align-items: flex-end;
   justify-content: flex-end;
@@ -124,10 +129,10 @@
   max-width: none;
   max-height: none;
   margin: 0;
-  padding: 10px 10px calc(10px + env(safe-area-inset-bottom));
+  padding: calc(10px - var(--clear));
+  padding-bottom: calc(10px - var(--clear) + env(safe-area-inset-bottom));
   border: 0;
-  overflow: hidden;
-  overscroll-behavior: contain;
+  overflow: visible;
   background: transparent;
   color: var(--label);
   outline: none;
@@ -140,9 +145,12 @@
   width: min(400px, 100%);
   overflow: clip;
   background: var(--bg);
+  /* Cast mostly upwards: Safari cuts fixed content off at the bottom of the
+     viewport, where a shadow falling below the sheet would end in a hard line.
+     Matches SHADOW in lib/liquid-surface.ts. */
   box-shadow:
-    0 6px 20px rgb(0 0 0 / 0.12),
-    0 24px 60px rgb(0 0 0 / calc(0.14 * var(--lift))),
+    0 calc(6px - 6px * var(--lift)) 20px rgb(0 0 0 / calc(0.12 - 0.07 * var(--lift))),
+    0 -16px 48px -12px rgb(0 0 0 / calc(0.08 * var(--lift))),
     0 0 0 0.5px rgb(0 0 0 / 0.1);
   outline: none;
 }
@@ -265,27 +273,15 @@
 
 /* ---------- Veil ---------- */
 
-/* Keep the blur and tint inside the viewport. Do not add artificial edge
-   colours or extend fixed layers into WebKit's browser chrome. */
+/* The same frosted veil as the project pane, a little lighter. Absolute and
+   taller than the page (--page-height, from home-nav.tsx), so it runs on under
+   the status bar and toolbar. --veil follows the morph. */
 .dialog::backdrop {
-  inset: 0;
-  background: transparent;
+  position: absolute;
+  inset: 0 0 auto;
+  height: var(--page-height, 100%);
+  background: rgb(210 210 215 / 0.45);
   -webkit-backdrop-filter: blur(12px) saturate(180%);
   backdrop-filter: blur(12px) saturate(180%);
   opacity: var(--veil, 1);
-  overflow: hidden;
-  overscroll-behavior: contain;
-}
-
-/* --veil comes from home-nav.tsx; both layers follow the same morph progress. */
-.veil {
-  position: absolute;
-  inset: 0;
-  opacity: var(--veil, 1);
-}
-
-.tint {
-  position: fixed;
-  inset: 0;
-  background: rgb(210 210 215 / 0.45);
 }

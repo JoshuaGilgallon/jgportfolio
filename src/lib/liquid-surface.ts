@@ -32,9 +32,9 @@ const RANGE = 256;
 const STEP = 2;
 const MAX_TAPS = 64;
 
-// The sheet's shadows (home-nav.module.css .panel): y offset, blur radius, alpha.
-// The second one grows in with the sheet.
-const SHADOW = { y1: 6, blur1: 20, a1: 0.12, y2: 24, blur2: 60, a2: 0.14, ring: 0.5, ringA: 0.1 };
+// The sheet's shadows (home-nav.module.css .panel): y offset, blur radius, spread, alpha.
+// The first goes from the button's (y1, a1) to the sheet's (centred, a1Sheet); the second grows in with the sheet.
+const SHADOW = { y1: 6, blur1: 20, a1: 0.12, a1Sheet: 0.05, y2: -16, blur2: 48, spread2: -12, a2: 0.08, ring: 0.5, ringA: 0.1 };
 // How far the shadows reach past the shape, for the scissor box.
 const REACH = { top: 70, side: 92, bottom: 116 };
 
@@ -144,8 +144,8 @@ void main() {
   float aa = max(length(vec2(dFdx(d), dFdy(d))), 1e-4);
   float fill = clamp(0.5 - d / aa, 0.0, 1.0);
   float ring = ${SHADOW.ringA} * clamp(0.5 - (d - ${SHADOW.ring}) / aa, 0.0, 1.0);
-  float s1 = ${SHADOW.a1} * shadow(field(p - vec2(0.0, ${SHADOW.y1}.0)), ${SHADOW.blur1}.0);
-  float s2 = ${SHADOW.a2} * uLift * shadow(field(p - vec2(0.0, ${SHADOW.y2}.0)), ${SHADOW.blur2}.0);
+  float s1 = mix(${SHADOW.a1}, ${SHADOW.a1Sheet}, uLift) * shadow(field(p - vec2(0.0, ${SHADOW.y1}.0 * (1.0 - uLift))), ${SHADOW.blur1}.0);
+  float s2 = ${SHADOW.a2} * uLift * shadow(field(p - vec2(0.0, ${SHADOW.y2}.0)) - (${SHADOW.spread2}.0), ${SHADOW.blur2}.0);
   float under = 1.0 - (1.0 - ring) * (1.0 - s1) * (1.0 - s2);
   o = vec4(uColor * fill, fill + (1.0 - fill) * under);
 }`;

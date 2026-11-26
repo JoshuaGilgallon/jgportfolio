@@ -109,8 +109,13 @@ html {
   scrollbar-width: thin;
 }
 
-html:has(dialog[open]:not([data-home-nav])) {
+html:has(dialog[open]) {
   overflow: hidden;
+}
+
+/* Not for the home page's sheet (home-nav.tsx): iOS Safari can take this
+   colour for its bars. */
+html:has(dialog[open]:not([data-home-nav])) {
   /* The scrollbar strip kept by scrollbar-gutter sits outside the
      backdrop; give it the backdrop's tint as it fades in. */
   background: color-mix(in srgb, rgb(210 210 215) calc(var(--veil, 1) * 45%), var(--bg));

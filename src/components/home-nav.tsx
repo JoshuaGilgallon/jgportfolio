@@ -15,6 +15,28 @@ const HINT_TIME = 5000;
 const CONTENT_BLUR = 4;
 /** Room above the sheet for the morph's overshoot and shadow, px. */
 const SURFACE_HEADROOM = 160;
+/** How far fixed layers stay from the top and bottom of the viewport, px (--clear, home-nav.module.css). */
+const CLEAR = 8;
+/** How far the veil runs past the end of the page, so it's still under the toolbar there, px. */
+const OVERHANG = 200;
+
+/**
+ * Marks the home page as its HTML is parsed, ahead of the first paint, so the
+ * top bar is never sticky there on phones, even before hydration. iOS Safari
+ * takes its status bar's colour from a sticky bar it finds at the top, and
+ * keeps that solid colour after the bar is unstuck. The script only runs from
+ * server HTML; on client navigations HomeNav sets the same mark.
+ */
+export function HomeMark() {
+  return (
+    <script
+      // Inert when React renders it in the browser, which would otherwise warn.
+      type={typeof window === "undefined" ? "text/javascript" : "text/plain"}
+      suppressHydrationWarning
+      dangerouslySetInnerHTML={{ __html: 'document.documentElement.dataset.home=""' }}
+    />
+  );
+}
 
 /**
  * The home page's navigation on phones once you've scrolled. There the top bar
@@ -34,8 +56,7 @@ export function HomeNav({ sections }: { sections: { id: string; label: string }[
   const ghostRef = useRef<HTMLDivElement>(null);
   const glyphRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const tintRef = useRef<HTMLDivElement>(null);
-  const sheet = useRef<{ open: () => void; close: () => void; reset: () => void } | null>(null);
+  const sheet = useRef<{ open: () => void; close: (scrolling?: boolean) => void; reset: () => void } | null>(null);
 
   // Marks the home page while it's on screen (the router keeps it mounted but
   // hidden elsewhere, which runs this cleanup). On phones the stylesheets unstick
@@ -78,6 +99,12 @@ export function HomeNav({ sections }: { sections: { id: string; label: string }[
     };
   }, [shown]);
 
+  // Other pages' bar is sticky, and the status bar stays solid after it.
+  useEffect(() => {
+    const bar = document.querySelector<HTMLElement>("[data-site-nav]");
+    if (shown && bar) return releaseStatusBar(bar);
+  }, [shown]);
+
   useEffect(() => {
     const button = buttonRef.current;
     const dialog = dialogRef.current;
@@ -98,11 +125,22 @@ export function HomeNav({ sections }: { sections: { id: string; label: string }[
     let rest: Frame;
     let source: Frame;
 
-    // Fade the blur and tint together without changing the root background or
-    // theme-color: WebKit may use those to paint opaque browser chrome.
+    // The page behind fades under its blur in step with the morph.
     const setVeil = (v: number) => {
       dialog.style.setProperty("--veil", String(v));
     };
+
+    let pageHeight = 0;
+    const setVeilHeight = (px: number) => dialog.style.setProperty("--page-height", `${px}px`);
+    /** Stretches the veil over the whole page and past its end. */
+    const cover = () => {
+      dialog.style.removeProperty("--page-height"); // measure the page without it
+      pageHeight = root.scrollHeight;
+      setVeilHeight(pageHeight + OVERHANG);
+    };
+    // Not while closing: that may be mid-scroll, which the overhang must stay out of.
+    const recover = () => dialog.open && !closing && cover();
+    addEventListener("resize", recover);
 
     const measure = () => {
       const styles = [panel.style.cssText, content.style.cssText];
@@ -126,9 +164,9 @@ export function HomeNav({ sections }: { sections: { id: string; label: string }[
       if (surface === undefined) surface = LiquidSurface.create(canvas);
       if (surface?.lost) surface = null;
       if (surface) {
-        // Room for the blobs' overshoot and the shadow, from the top of the sheet to the bottom of the screen.
-        const top = Math.max(0, Math.min(rest.cy - rest.h / 2, source.cy - source.h / 2) - SURFACE_HEADROOM);
-        surface.layout(0, top, root.clientWidth, innerHeight - top, color);
+        // Room for the blobs' overshoot and the shadow, from the top of the sheet to just short of the bottom of the screen.
+        const top = Math.max(CLEAR, Math.min(rest.cy - rest.h / 2, source.cy - source.h / 2) - SURFACE_HEADROOM);
+        surface.layout(0, top, root.clientWidth, innerHeight - CLEAR - top, color);
         dialog.dataset.surface = "";
       } else delete dialog.dataset.surface;
     };
@@ -190,6 +228,7 @@ export function HomeNav({ sections }: { sections: { id: string; label: string }[
       if (dialog.open) dialog.close();
       settle();
       dialog.style.removeProperty("--veil");
+      dialog.style.removeProperty("--page-height");
     };
 
     /**
@@ -231,6 +270,7 @@ export function HomeNav({ sections }: { sections: { id: string; label: string }[
         closing = false;
         setHint(false);
         setVeil(0);
+        cover();
         dialog.showModal();
         // Focus the sheet itself: a ring on its first button would look selected.
         panel.focus({ preventScroll: true });
@@ -241,10 +281,12 @@ export function HomeNav({ sections }: { sections: { id: string; label: string }[
         morph.expand();
         run();
       },
-      close() {
+      close(scrolling) {
         if (!dialog.open || closing) return;
         if (still()) return finish();
         closing = true;
+        // The overhang lengthens the page: a scroll mustn't run on into it.
+        if (scrolling) setVeilHeight(pageHeight);
         // At rest the morph already sits on the sheet; measure afresh in case the window changed.
         if (!morph.animating) measure();
         morph.collapse();
@@ -255,6 +297,7 @@ export function HomeNav({ sections }: { sections: { id: string; label: string }[
     // Leaving the page (the router hides it) must not leave an invisible modal behind.
     return () => {
       sheet.current = null;
+      removeEventListener("resize", recover);
       finish();
     };
   }, []);
@@ -263,7 +306,7 @@ export function HomeNav({ sections }: { sections: { id: string; label: string }[
   const go = (e: React.MouseEvent, id: string) => {
     if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
     e.preventDefault();
-    sheet.current?.close();
+    sheet.current?.close(true);
     const behavior = matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
     document.getElementById(id)?.scrollIntoView({ behavior });
   };
@@ -298,12 +341,9 @@ export function HomeNav({ sections }: { sections: { id: string; label: string }[
         }}
         // A browser may close it regardless on a second Back; tidy up after it.
         onClose={(e) => !e.currentTarget.open && sheet.current?.reset()}
-        // A click on the tint, or the dialog around the sheet, was outside the sheet.
-        onClick={(e) => (e.target === e.currentTarget || e.target === tintRef.current) && sheet.current?.close()}
+        // A click on the dialog itself, not on anything in it, was outside the sheet.
+        onClick={(e) => e.target === e.currentTarget && sheet.current?.close()}
       >
-        <div className={s.veil} aria-hidden>
-          <div ref={tintRef} className={s.tint} />
-        </div>
         <canvas ref={canvasRef} className={s.surface} aria-hidden />
         <div ref={ghostRef} className={s.ghost} aria-hidden>
           <div ref={glyphRef} className={s.glyph}>
@@ -333,6 +373,37 @@ export function HomeNav({ sections }: { sections: { id: string; label: string }[
       </dialog>
     </>
   );
+}
+
+/**
+ * iOS Safari goes on painting its status bar a flat colour after a sticky bar
+ * has been at the top, even once it's unstuck. It lets go when that element
+ * leaves the layout, so this takes the bar out for two frames, with padding
+ * holding its place. Call it while the bar is off screen. Returns a cleanup.
+ */
+function releaseStatusBar(bar: HTMLElement) {
+  const { body, documentElement: root } = document;
+  let timer = 0;
+  let frame = 0;
+  const restore = () => {
+    bar.style.display = body.style.paddingTop = "";
+  };
+  const release = () => {
+    // A page slide holds rendering still (page-transitions.tsx): wait it out.
+    if (root.dataset.nav) {
+      timer = window.setTimeout(release, 100);
+      return;
+    }
+    body.style.paddingTop = `${bar.offsetHeight}px`;
+    bar.style.display = "none";
+    frame = requestAnimationFrame(() => (frame = requestAnimationFrame(restore)));
+  };
+  release();
+  return () => {
+    clearTimeout(timer);
+    cancelAnimationFrame(frame);
+    restore();
+  };
 }
 
 function MenuGlyph() {

@@ -1,5 +1,5 @@
 import { ContactList } from "@/components/contact-list";
-import { HomeNav } from "@/components/home-nav";
+import { HomeMark, HomeNav } from "@/components/home-nav";
 import { List, Row } from "@/components/list";
 import { ProjectCard, ProjectGrid } from "@/components/project-card";
 import { Section } from "@/components/section";
@@ -21,6 +21,7 @@ export default async function Home() {
 
   return (
     <>
+      <HomeMark />
       <header className={s.hero}>
         <h1 className={s.title}>Hi, I’m Josh.</h1>
         <p className={s.lead}>
