@@ -1,0 +1,63 @@
+# Written for Dokploy: no published ports or container names. Add a domain in
+# the Domains tab pointing at service "app", port 3000.
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    init: true
+    environment:
+      DATABASE_URL: http://portfolio-db:8080
+      SITE_URL: ${SITE_URL:?set SITE_URL}
+      # Keeps Auth.js redirects on the public address behind the proxy.
+      AUTH_URL: ${SITE_URL}
+      AUTH_SECRET: ${AUTH_SECRET:?set AUTH_SECRET}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:?set ADMIN_USERNAME}
+      ADMIN_PASSWORD_HASH: ${ADMIN_PASSWORD_HASH:?set ADMIN_PASSWORD_HASH}
+    expose:
+      - "3000"
+    depends_on:
+      portfolio-db:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - >-
+          fetch('http://127.0.0.1:3000/robots.txt').then(r => process.exit(r.ok ? 0 : 1), () => process.exit(1))
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 90s
+    networks:
+      - internal
+
+  # SQLite served over HTTP by libSQL. It has no auth, so it stays on the
+  # private network: don't publish its port or give it a domain.
+  portfolio-db:
+    image: ghcr.io/tursodatabase/libsql-server:v0.24.33
+    restart: unless-stopped
+    environment:
+      SQLD_NODE: standalone
+    volumes:
+      - sqlite-data:/var/lib/sqld
+    healthcheck:
+      # The image has bash but no curl or wget.
+      test:
+        - CMD
+        - bash
+        - -c
+        - >-
+          exec 3<>/dev/tcp/127.0.0.1/8080 && printf 'GET /health HTTP/1.0\r\n\r\n' >&3 && head -n1 <&3 | grep -q ' 200 '
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+    networks:
+      - internal
+
+networks:
+  internal:
+
+volumes:
+  sqlite-data:

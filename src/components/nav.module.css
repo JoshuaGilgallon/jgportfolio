@@ -23,11 +23,13 @@
   }
 }
 
-/* On the home page the bar scrolls away with the page, and a floating button
-   takes over (home-nav.tsx). */
-:global(html[data-home]) .bar {
-  position: relative;
-  animation: none;
+/* On the home page on phones (PHONE, lib/pages.ts) the bar scrolls away with
+   the page, and a floating button takes over (home-nav.tsx). */
+@media (max-width: 600px), (pointer: coarse) and (max-height: 500px) {
+  :global(html[data-home]) .bar {
+    position: relative;
+    animation: none;
+  }
 }
 
 .inner {

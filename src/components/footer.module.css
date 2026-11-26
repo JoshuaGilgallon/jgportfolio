@@ -12,7 +12,7 @@
 }
 
 /* Room to scroll the footer clear of the home page's floating button. */
-@media (max-width: 860px) {
+@media (max-width: 600px), (pointer: coarse) and (max-height: 500px) {
   :global(html[data-home]) .footer {
     padding-bottom: calc(96px + env(safe-area-inset-bottom));
   }

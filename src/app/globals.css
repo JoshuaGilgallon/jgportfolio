@@ -92,9 +92,11 @@ html {
   scroll-padding-top: calc(var(--nav-h) + 24px);
 }
 
-/* No sticky bar to clear on the home page (home-nav.tsx). */
-html[data-home] {
-  scroll-padding-top: 24px;
+/* No sticky bar to clear on the home page on phones (home-nav.tsx). */
+@media (max-width: 600px), (pointer: coarse) and (max-height: 500px) {
+  html[data-home] {
+    scroll-padding-top: 24px;
+  }
 }
 
 /* Scrollbars: slim and quiet, a grey pill on a clear track (page, code

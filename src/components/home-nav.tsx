@@ -1,22 +1,27 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { frameOf, MorphAnimation, type Frame } from "@/lib/morph";
+import { LiquidMorph } from "@/lib/liquid-morph";
+import { LiquidSurface } from "@/lib/liquid-surface";
+import { frameOf, type Frame } from "@/lib/morph";
 import { ChevronRight } from "./icons";
 import s from "./home-nav.module.css";
 
 /** Remembers that the hint has been shown, so it only ever appears once. */
 const HINT_SEEN = "nav-hint-seen";
 const HINT_TIME = 5000;
-/** As in the project pane (modal.tsx). */
-const MAX_BLUR = 16;
-const BLUR_OUT_SCALE = 1.65;
+/** The content's blur at the far end of its cross-fade, px (measured on iOS: 4 pt). */
+const CONTENT_BLUR = 4;
+/** Room above the sheet for the morph's overshoot and shadow, px. */
+const SURFACE_HEADROOM = 160;
 
 /**
- * The home page's navigation once you've scrolled. Here the top bar isn't
- * sticky: it leaves with the page, and a round button blurs in at the bottom
- * right. Tapping it morphs the button into a sheet along the bottom of the
- * screen, with the same liquid morph as the project pane (src/lib/morph.ts).
+ * The home page's navigation on phones once you've scrolled. There the top bar
+ * isn't sticky: it leaves with the page, and a round button blurs in at the
+ * bottom right. Tapping it morphs the button into a sheet along the bottom of
+ * the screen with iOS's button → menu morph (src/lib/liquid-morph.ts): the
+ * sheet wells up out of the button as a second blob, the two fused into one
+ * surface (src/lib/liquid-surface.ts), while the button shrinks away into it.
  */
 export function HomeNav({ sections }: { sections: { id: string; label: string }[] }) {
   const [shown, setShown] = useState(false);
@@ -26,10 +31,13 @@ export function HomeNav({ sections }: { sections: { id: string; label: string }[
   const panelRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const ghostRef = useRef<HTMLDivElement>(null);
+  const glyphRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const sheet = useRef<{ open: () => void; close: () => void; reset: () => void } | null>(null);
 
   // Marks the home page while it's on screen (the router keeps it mounted but
-  // hidden elsewhere, which runs this cleanup). The stylesheets unstick the bar.
+  // hidden elsewhere, which runs this cleanup). On phones the stylesheets unstick
+  // the bar.
   useLayoutEffect(() => {
     document.documentElement.dataset.home = "";
     return () => {
@@ -74,14 +82,19 @@ export function HomeNav({ sections }: { sections: { id: string; label: string }[
     const panel = panelRef.current;
     const content = contentRef.current;
     const ghost = ghostRef.current;
-    if (!button || !dialog || !panel || !content || !ghost) return;
+    const glyph = glyphRef.current;
+    const canvas = canvasRef.current;
+    if (!button || !dialog || !panel || !content || !ghost || !glyph || !canvas) return;
 
     const root = document.documentElement;
-    const morph = new MorphAnimation();
+    const morph = new LiquidMorph();
     const squircles = CSS.supports("corner-shape", "superellipse(2)");
+    // Made on the first open; null where there's no WebGL 2, and the blobs draw themselves instead.
+    let surface: LiquidSurface | null | undefined;
     let frame = 0;
     let closing = false;
     let rest: Frame;
+    let source: Frame;
 
     // The page behind fades under its blur in step with the morph (see modal.tsx).
     let veil: Animation | null = null;
@@ -94,12 +107,14 @@ export function HomeNav({ sections }: { sections: { id: string; label: string }[
     const measure = () => {
       const styles = [panel.style.cssText, content.style.cssText];
       panel.style.cssText = content.style.cssText = "";
-      rest = frameOf(panel.getBoundingClientRect(), parseFloat(getComputedStyle(panel).getPropertyValue("--r")));
+      const ps = getComputedStyle(panel);
+      rest = frameOf(panel.getBoundingClientRect(), parseFloat(ps.getPropertyValue("--r")));
+      const color = ps.backgroundColor;
       [panel.style.cssText, content.style.cssText] = styles;
       // The button is a circle, whatever its transition is doing: measure its layout box.
       const { width, right, bottom } = getComputedStyle(button);
       const size = parseFloat(width);
-      const source: Frame = {
+      source = {
         cx: root.clientWidth - parseFloat(right) - size / 2,
         cy: innerHeight - parseFloat(bottom) - size / 2,
         w: size,
@@ -107,34 +122,65 @@ export function HomeNav({ sections }: { sections: { id: string; label: string }[
         r: size / 2,
       };
       morph.setEnds(source, rest);
-      return source;
+
+      if (surface === undefined) surface = LiquidSurface.create(canvas);
+      if (surface?.lost) surface = null;
+      if (surface) {
+        // Room for the blobs' overshoot and the shadow, from the top of the sheet to the bottom of the screen.
+        const top = Math.max(0, Math.min(rest.cy - rest.h / 2, source.cy - source.h / 2) - SURFACE_HEADROOM);
+        surface.layout(0, top, root.clientWidth, innerHeight - top, color);
+        dialog.dataset.surface = "";
+      } else delete dialog.dataset.surface;
     };
 
-    const blur = (amount: number) => (amount * MAX_BLUR < 0.3 ? "none" : `blur(${amount * MAX_BLUR}px)`);
+    const blur = (px: number) => (px < 0.3 ? "none" : `blur(${px}px)`);
+    /** The site's squircle corner (.sq, globals.css), `q` of the way from a circle. */
+    const corner = (r: number, f: Frame, q: number) =>
+      squircles ? { r: Math.min(r * (1 + 0.53 * q), Math.min(f.w, f.h) / 2), k: 1 + 0.7 * q } : { r, k: 1 };
 
-    const draw = (source: Frame) => {
-      const f = morph.shape;
-      const p = Math.min(1, Math.max(0, morph.progress));
-      // From a true circle into the site's squircle corner (.sq, globals.css).
-      const corner = squircles
-        ? `border-radius:${f.r * (1 + 0.53 * p)}px;corner-shape:superellipse(${1 + 0.7 * p});`
-        : `border-radius:${f.r}px;`;
+    const draw = () => {
+      const b = morph.bodyFrame;
+      const g = morph.ghostFrame;
+      const c = corner(b.r, b, morph.cornerProgress);
+      const p = morph.contentProgress;
+      const pc = Math.min(1, Math.max(0, p));
+      const lift = Math.min(1, Math.max(0, morph.progress));
+
+      // The surface: both blobs as one shape, fused while the field is blurred.
+      surface?.draw(
+        [
+          { ...g, r: Math.min(g.w, g.h) / 2, k: 1 },
+          { ...b, r: c.r, k: c.k },
+        ],
+        morph.gaussSigma,
+        lift,
+      );
+
+      // The body clips the menu, scaled to fit it, fading and sharpening in…
       panel.style.cssText =
-        `position:fixed;left:0;top:0;margin:0;width:${f.w}px;height:${f.h}px;` +
-        `transform:translate3d(${f.cx - f.w / 2}px,${f.cy - f.h / 2}px,0);--lift:${p};${corner}`;
+        `position:fixed;left:0;top:0;margin:0;width:${b.w}px;height:${b.h}px;` +
+        `transform:translate3d(${b.cx - b.w / 2}px,${b.cy - b.h / 2}px,0);--lift:${lift};` +
+        `border-radius:${c.r}px;${squircles ? `corner-shape:superellipse(${c.k});` : ""}`;
+      const s = Math.min(b.w / rest.w, b.h / rest.h);
       content.style.cssText =
-        `position:absolute;right:0;bottom:0;width:${rest.w}px;height:${rest.h}px;` +
-        `opacity:${morph.targetOpacity};filter:${blur(morph.targetBlur)}`;
+        `position:absolute;left:0;top:0;width:${rest.w}px;height:${rest.h}px;` +
+        `transform:translate3d(${(b.w - rest.w) / 2}px,${(b.h - rest.h) / 2}px,0) scale(${s});` +
+        `opacity:${pc};filter:${blur(Math.hypot(CONTENT_BLUR * (1 - pc), morph.lensBlur))}`;
+      // …while the ghost carries the button's icon away, blurring out.
       ghost.style.cssText =
-        `opacity:${morph.sourceOpacity};filter:${blur(morph.sourceBlur)};` +
-        `transform:scale(${Math.min(BLUR_OUT_SCALE, Math.max(1, f.w / source.w))})`;
-      setVeil(p);
+        `width:${g.w}px;height:${g.h}px;transform:translate3d(${g.cx - g.w / 2}px,${g.cy - g.h / 2}px,0)`;
+      glyph.style.cssText =
+        `left:${(g.w - source.w) / 2}px;top:${(g.h - source.h) / 2}px;width:${source.w}px;height:${source.h}px;` +
+        `transform:scale(${Math.max(g.w / source.w, g.h / source.h)});` +
+        `opacity:${1 - pc};filter:${blur(CONTENT_BLUR * pc)}`;
+      setVeil(lift);
     };
 
     /** Hands the sheet back to its stylesheet. */
     const settle = () => {
-      panel.style.cssText = content.style.cssText = ghost.style.cssText = "";
+      panel.style.cssText = content.style.cssText = ghost.style.cssText = glyph.style.cssText = "";
       delete dialog.dataset.morphing;
+      surface?.clear();
     };
 
     const finish = () => {
@@ -149,26 +195,31 @@ export function HomeNav({ sections }: { sections: { id: string; label: string }[
       root.style.removeProperty("--veil");
     };
 
-    /** Steps the morph until it's indistinguishable from where it's going. */
-    const run = (source: Frame) => {
+    /**
+     * Closing, the springs take another second to settle to a hundredth of a
+     * pixel after the button looks back: hand over to the button (and the page)
+     * once nothing visible is left to move.
+     */
+    const home = () => {
+      const g = morph.ghostFrame;
+      const b = morph.bodyFrame;
+      const near = (a: number, b: number) => Math.abs(a - b) < 0.25;
+      const inside = Math.hypot(b.cx - source.cx, b.cy - source.cy) + Math.max(b.w, b.h) / 2 <= source.w / 2;
+      return near(g.cx, source.cx) && near(g.cy, source.cy) && near(g.w, source.w) && near(g.h, source.h) && inside && morph.contentProgress < 0.005;
+    };
+
+    /** Steps the morph until its springs come to rest. */
+    const run = () => {
       cancelAnimationFrame(frame);
       dialog.dataset.morphing = "";
-      draw(source);
+      draw();
       let last = 0;
       const tick = (now: number) => {
         const dt = last ? Math.min((now - last) / 1000, 1 / 30) : 1 / 60;
         last = now;
         morph.update(dt);
-        draw(source);
-        const f = morph.shape;
-        const to = closing ? source : rest;
-        const near = (a: number, b: number) => Math.abs(a - b) < 0.5;
-        const there =
-          near(f.cx, to.cx) && near(f.cy, to.cy) && near(f.w, to.w) && near(f.h, to.h) &&
-          morph.kickAmount * Math.max(to.w, to.h) < 0.5;
-        if (closing && there && morph.sourceOpacity > 0.99) return finish();
-        if (!closing && ((there && morph.targetOpacity > 0.999 && morph.sourceOpacity === 0) || !morph.animating))
-          return settle();
+        if (!morph.animating || (closing && home())) return closing ? finish() : settle();
+        draw();
         frame = requestAnimationFrame(tick);
       };
       frame = requestAnimationFrame(tick);
@@ -191,19 +242,19 @@ export function HomeNav({ sections }: { sections: { id: string; label: string }[
         } catch {}
         button.dataset.away = "";
         if (still()) return setVeil(1);
-        const source = measure();
+        measure();
         morph.snap(false);
         morph.expand();
-        run(source);
+        run();
       },
       close() {
         if (!dialog.open || closing) return;
         if (still()) return finish();
         closing = true;
         // At rest the morph already sits on the sheet; measure afresh in case the window changed.
-        const source = measure();
+        if (!morph.animating) measure();
         morph.collapse();
-        run(source);
+        run();
       },
     };
 
@@ -253,10 +304,13 @@ export function HomeNav({ sections }: { sections: { id: string; label: string }[
         onClose={(e) => !e.currentTarget.open && sheet.current?.reset()}
         onClick={(e) => e.target === e.currentTarget && sheet.current?.close()}
       >
-        <div ref={panelRef} className={`${s.panel} sq`} tabIndex={-1}>
-          <div ref={ghostRef} className={s.ghost} aria-hidden>
+        <canvas ref={canvasRef} className={s.surface} aria-hidden />
+        <div ref={ghostRef} className={s.ghost} aria-hidden>
+          <div ref={glyphRef} className={s.glyph}>
             <MenuGlyph />
           </div>
+        </div>
+        <div ref={panelRef} className={`${s.panel} sq`} tabIndex={-1}>
           <div ref={contentRef} className={s.content}>
             <nav aria-label="Sections">
               <ul className={`${s.list} sq`}>

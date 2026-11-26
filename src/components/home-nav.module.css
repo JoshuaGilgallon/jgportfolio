@@ -40,11 +40,14 @@
     visibility var(--spring-smooth);
 }
 
-.button[data-shown] {
-  visibility: visible;
-  opacity: 1;
-  filter: none;
-  transform: none;
+/* Only phones (PHONE, lib/pages.ts) get the button; elsewhere the bar is sticky. */
+@media (max-width: 600px), (pointer: coarse) and (max-height: 500px) {
+  .button[data-shown] {
+    visibility: visible;
+    opacity: 1;
+    filter: none;
+    transform: none;
+  }
 }
 
 /* While the sheet is out, the button is the sheet. */
@@ -94,11 +97,13 @@
   border-top-color: var(--label);
 }
 
-.hint[data-shown] {
-  visibility: visible;
-  opacity: 1;
-  filter: none;
-  transform: none;
+@media (max-width: 600px), (pointer: coarse) and (max-height: 500px) {
+  .hint[data-shown] {
+    visibility: visible;
+    opacity: 1;
+    filter: none;
+    transform: none;
+  }
 }
 
 /* ---------- Sheet ---------- */
@@ -198,17 +203,57 @@
   background: var(--fill-strong);
 }
 
-/* The button's own icon, dissolving as the sheet takes its place. */
-.ghost {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
+/* ---------- Morph (home-nav.tsx) ---------- */
+
+/* The surface the button and sheet share while one becomes the other. */
+.surface {
+  position: fixed;
+  display: none;
   pointer-events: none;
-  opacity: 0;
 }
 
-.dialog[data-morphing] :is(.panel, .content, .ghost) {
+.dialog[data-surface][data-morphing] .surface {
+  display: block;
+}
+
+/* With the surface drawn, the sheet only clips its content. */
+.dialog[data-surface][data-morphing] .panel {
+  background: transparent;
+  box-shadow: none;
+}
+
+/* The button, shrinking away into the sheet. */
+.ghost {
+  position: fixed;
+  left: 0;
+  top: 0;
+  display: none;
+  overflow: clip;
+  border-radius: 9999px;
+  pointer-events: none;
+}
+
+.dialog[data-morphing] .ghost {
+  display: block;
+}
+
+/* Without the surface (no WebGL 2), each blob draws itself. */
+.dialog[data-morphing]:not([data-surface]) .ghost {
+  background: var(--bg);
+  box-shadow:
+    0 6px 20px rgb(0 0 0 / 0.12),
+    0 0 0 0.5px rgb(0 0 0 / 0.1);
+}
+
+/* Its icon. */
+.glyph {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  color: var(--label);
+}
+
+.dialog[data-morphing] :is(.panel, .content, .ghost, .glyph) {
   will-change: transform, opacity, filter;
 }
 
