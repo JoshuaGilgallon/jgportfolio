@@ -214,6 +214,12 @@
   position: fixed;
   display: none;
   pointer-events: none;
+  /* In landscape it can span a side edge while the morph runs, above .tint,
+     so it carries the colour the bars read too (see Veil, and .edge for the
+     background-clip). */
+  background: rgb(210 210 215 / 0.45);
+  -webkit-background-clip: text;
+  background-clip: text;
 }
 
 .dialog[data-surface][data-morphing] .surface {
@@ -261,12 +267,27 @@
   will-change: transform, opacity, filter;
 }
 
+/* ---------- Veil ---------- */
+
 /* The same frosted veil as the project pane, a little lighter: the blur is
-   the backdrop, the grey is .tint over it. iOS 26 Safari colours its status
-   bar and toolbar from a fixed overlay at the screen's edges, but skips one
-   with a backdrop-filter (and never looks at ::backdrop), so the tint gets an
-   empty, plain layer of its own that it can read. Blurring then tinting
-   looks the same as the two together. */
+   the backdrop, the grey is .tint over it (blurring then tinting looks the
+   same as the two together).
+
+   The veil also has to colour the browser's bars. On iOS 26 every WebKit
+   browser paints the status bar and toolbar areas with a colour it reads off
+   the page (WebCore's LocalFrameView::fixedContainerEdges): it hit-tests the
+   middle of each screen edge, takes the first fixed element there and uses
+   its background-color, blended over the page. It reads only when fixed
+   elements come or go, which here is the sheet's first frame, while the veil
+   is still clear. And for a full-screen overlay it keeps whatever colour the
+   edge already had (the site bar's frosting, sticky until the page hydrates,
+   leaves one), so .tint alone was never read: hence white bars.
+
+   So .edge strips lie along the top and bottom: too short to count as an
+   overlay, so their colour is always taken, and they hold the veil's final
+   colour from the first frame without painting it. .tint keeps its full
+   colour too, fading through its wrapper (WebKit checks only an element's
+   own opacity), for the sides in landscape. */
 .dialog::backdrop {
   background: transparent;
   -webkit-backdrop-filter: blur(12px) saturate(180%);
@@ -274,10 +295,35 @@
   opacity: var(--veil, 1);
 }
 
-/* Fades with the morph through its colour, not its opacity, so the colour
-   Safari reads is the one on screen. --veil comes from home-nav.tsx. */
+/* --veil comes from home-nav.tsx. */
+.veil {
+  position: absolute;
+  opacity: var(--veil, 1);
+}
+
 .tint {
   position: fixed;
   inset: 0;
-  background: rgb(210 210 215 / calc(0.45 * var(--veil, 1)));
+  background: rgb(210 210 215 / 0.45);
+}
+
+/* Over everything in the sheet, but invisible and untouchable:
+   background-clip: text paints none of the colour WebKit reads, there being
+   no text. Taller than WebKit's 10px floor. */
+.edge {
+  position: fixed;
+  inset-inline: 0;
+  height: 32px;
+  pointer-events: none;
+  background: rgb(210 210 215 / 0.45);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+.edgeTop {
+  top: 0;
+}
+
+.edgeBottom {
+  bottom: 0;
 }

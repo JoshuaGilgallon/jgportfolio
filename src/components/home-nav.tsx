@@ -100,8 +100,8 @@ export function HomeNav({ sections }: { sections: { id: string; label: string }[
 
     // The page behind fades under its blur in step with the morph (see modal.tsx).
     let veil: Animation | null = null;
-    // Browsers that still colour their bars from theme-color take the veil's
-    // grey with it (iOS 26 Safari reads .tint instead; home-nav.module.css).
+    // Browsers that still colour their bars from theme-color (before iOS 26)
+    // take the veil's grey with it. iOS 26 reads the page (home-nav.module.css).
     const theme = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
     const themeColor = theme?.content;
     const setVeil = (v: number) => {
@@ -315,7 +315,9 @@ export function HomeNav({ sections }: { sections: { id: string; label: string }[
         // A click on the tint, or the dialog around the sheet, was outside the sheet.
         onClick={(e) => (e.target === e.currentTarget || e.target === tintRef.current) && sheet.current?.close()}
       >
-        <div ref={tintRef} className={s.tint} aria-hidden />
+        <div className={s.veil} aria-hidden>
+          <div ref={tintRef} className={s.tint} />
+        </div>
         <canvas ref={canvasRef} className={s.surface} aria-hidden />
         <div ref={ghostRef} className={s.ghost} aria-hidden>
           <div ref={glyphRef} className={s.glyph}>
@@ -342,6 +344,9 @@ export function HomeNav({ sections }: { sections: { id: string; label: string }[
             </button>
           </div>
         </div>
+        {/* What the browser's bars take their colour from (home-nav.module.css, Veil). */}
+        <div className={`${s.edge} ${s.edgeTop}`} aria-hidden />
+        <div className={`${s.edge} ${s.edgeBottom}`} aria-hidden />
       </dialog>
     </>
   );
