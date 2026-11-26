@@ -92,6 +92,9 @@ export function Modal({ children, labelledBy }: { children: React.ReactNode; lab
       if (side) dialog.show();
       else dialog.showModal();
     }
+    // next reuses a recent project's hidden dom, and safari brings back its
+    // old scroll position with it. a crossed breakpoint keeps its place
+    if (!resumed) scroll.scrollTop = 0;
 
     const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
     let closing = false;
