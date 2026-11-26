@@ -14,6 +14,8 @@
  * pass is scissored to the blobs and their shadow.
  */
 
+import { parseComputedColor } from "./color";
+
 /** A rounded rectangle with superellipse corners, in CSS px. */
 export type Blob = {
   cx: number;
@@ -227,7 +229,7 @@ export class LiquidSurface {
     };
   }
 
-  /** Places the canvas over a box of the viewport (CSS px) and sets the fill colour (any CSS colour). */
+  /** Places the canvas over a box of the viewport (CSS px) and sets the fill colour (a computed CSS colour). */
   layout(x: number, y: number, w: number, h: number, color: string) {
     const { gl, canvas } = this;
     this.dpr = Math.min(devicePixelRatio || 1, 3);
@@ -348,14 +350,7 @@ export class LiquidSurface {
   }
 }
 
-/** Any CSS colour → sRGB 0..1, via a 1×1 canvas. */
+/** A computed CSS colour → sRGB 0..1; white (the sheet's colour) if it can't be read. */
 function parseColor(css: string): number[] {
-  const c = document.createElement("canvas");
-  c.width = c.height = 1;
-  const ctx = c.getContext("2d");
-  if (!ctx) return [1, 1, 1];
-  ctx.fillStyle = css;
-  ctx.fillRect(0, 0, 1, 1);
-  const [r, g, b] = ctx.getImageData(0, 0, 1, 1).data;
-  return [r / 255, g / 255, b / 255];
+  return (parseComputedColor(css) ?? [255, 255, 255]).map((c) => c / 255);
 }

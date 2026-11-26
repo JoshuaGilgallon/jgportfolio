@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
+import { parseComputedColor } from "@/lib/color";
 import { frameOf, MorphAnimation, type Frame } from "@/lib/morph";
 import { morph as morphSettings, Spring } from "@/lib/spring";
 import { HapticTap } from "./haptic-tap";
@@ -137,7 +138,9 @@ export function Modal({ children, labelledBy }: { children: React.ReactNode; lab
     const sourceFrame = (rest: Frame): Frame =>
       card ? frameOf(card.getBoundingClientRect(), radiusOf(card)) : { ...rest, w: rest.w * 0.9, h: rest.h * 0.9 };
 
-    const rgb = (color: string) => (color.match(/[\d.]+/g) ?? []).slice(0, 3).map(Number);
+    /** The element's background, or `fallback` if it's unreadable or clear. */
+    const rgb = (el: Element, fallback: number[]) =>
+      parseComputedColor(getComputedStyle(el).backgroundColor) ?? fallback;
     let fromColor = [245, 245, 247];
     let ghostWidth = 1;
     let ghostPlus: HTMLElement | null = null;
@@ -156,7 +159,7 @@ export function Modal({ children, labelledBy }: { children: React.ReactNode; lab
       ghost.append(copy);
       ghostWidth = card.offsetWidth;
       ghostPlus = copy.querySelector<HTMLElement>("[aria-hidden]");
-      fromColor = rgb(getComputedStyle(card).backgroundColor);
+      fromColor = rgb(card, [245, 245, 247]);
     };
 
     // ---- Drawing ----
@@ -173,7 +176,7 @@ export function Modal({ children, labelledBy }: { children: React.ReactNode; lab
       source = sourceFrame(rest);
       morph.setEnds(source, rest);
     };
-    toColor = rgb(getComputedStyle(panel).backgroundColor);
+    toColor = rgb(panel, toColor);
 
     // Sub-pixel blur is invisible but still costs a filter pass per frame.
     const blur = (amount: number) => (amount * MAX_BLUR < 0.3 ? "none" : `blur(${amount * MAX_BLUR}px)`);
