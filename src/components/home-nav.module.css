@@ -261,10 +261,23 @@
   will-change: transform, opacity, filter;
 }
 
-/* The same frosted veil as the project pane, a little lighter. */
+/* The same frosted veil as the project pane, a little lighter: the blur is
+   the backdrop, the grey is .tint over it. iOS 26 Safari colours its status
+   bar and toolbar from a fixed overlay at the screen's edges, but skips one
+   with a backdrop-filter (and never looks at ::backdrop), so the tint gets an
+   empty, plain layer of its own that it can read. Blurring then tinting
+   looks the same as the two together. */
 .dialog::backdrop {
-  background: rgb(210 210 215 / 0.45);
+  background: transparent;
   -webkit-backdrop-filter: blur(12px) saturate(180%);
   backdrop-filter: blur(12px) saturate(180%);
   opacity: var(--veil, 1);
+}
+
+/* Fades with the morph through its colour, not its opacity, so the colour
+   Safari reads is the one on screen. --veil comes from home-nav.tsx. */
+.tint {
+  position: fixed;
+  inset: 0;
+  background: rgb(210 210 215 / calc(0.45 * var(--veil, 1)));
 }

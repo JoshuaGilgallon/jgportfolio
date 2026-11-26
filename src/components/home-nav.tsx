@@ -34,6 +34,7 @@ export function HomeNav({ sections }: { sections: { id: string; label: string }[
   const ghostRef = useRef<HTMLDivElement>(null);
   const glyphRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const tintRef = useRef<HTMLDivElement>(null);
   const sheet = useRef<{ open: () => void; close: () => void; reset: () => void } | null>(null);
 
   // Marks the home page while it's on screen (the router keeps it mounted but
@@ -99,10 +100,16 @@ export function HomeNav({ sections }: { sections: { id: string; label: string }[
 
     // The page behind fades under its blur in step with the morph (see modal.tsx).
     let veil: Animation | null = null;
+    // Browsers that still colour their bars from theme-color take the veil's
+    // grey with it (iOS 26 Safari reads .tint instead; home-nav.module.css).
+    const theme = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
+    const themeColor = theme?.content;
     const setVeil = (v: number) => {
       if (veil) veil.currentTime = v * 1000;
       else dialog.style.setProperty("--veil", String(v));
       root.style.setProperty("--veil", String(v));
+      // .tint's rgb(210 210 215 / 0.45v) over the white page.
+      if (theme) theme.content = `rgb(${255 - 20.25 * v} ${255 - 20.25 * v} ${255 - 18 * v})`;
     };
 
     const measure = () => {
@@ -194,6 +201,7 @@ export function HomeNav({ sections }: { sections: { id: string; label: string }[
       veil = null;
       dialog.style.removeProperty("--veil");
       root.style.removeProperty("--veil");
+      if (theme && themeColor !== undefined) theme.content = themeColor;
     };
 
     /**
@@ -304,8 +312,10 @@ export function HomeNav({ sections }: { sections: { id: string; label: string }[
         }}
         // A browser may close it regardless on a second Back; tidy up after it.
         onClose={(e) => !e.currentTarget.open && sheet.current?.reset()}
-        onClick={(e) => e.target === e.currentTarget && sheet.current?.close()}
+        // A click on the tint, or the dialog around the sheet, was outside the sheet.
+        onClick={(e) => (e.target === e.currentTarget || e.target === tintRef.current) && sheet.current?.close()}
       >
+        <div ref={tintRef} className={s.tint} aria-hidden />
         <canvas ref={canvasRef} className={s.surface} aria-hidden />
         <div ref={ghostRef} className={s.ghost} aria-hidden>
           <div ref={glyphRef} className={s.glyph}>
