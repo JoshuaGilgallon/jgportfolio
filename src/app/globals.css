@@ -109,7 +109,7 @@ html {
   scrollbar-width: thin;
 }
 
-html:has(dialog[open]) {
+html:has(dialog[open]:not([data-home-nav])) {
   overflow: hidden;
   /* The scrollbar strip kept by scrollbar-gutter sits outside the
      backdrop; give it the backdrop's tint as it fades in. */

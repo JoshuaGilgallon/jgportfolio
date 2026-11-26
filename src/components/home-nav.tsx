@@ -304,6 +304,7 @@ export function HomeNav({ sections }: { sections: { id: string; label: string }[
       </button>
       <dialog
         ref={dialogRef}
+        data-home-nav=""
         className={s.dialog}
         aria-label="Navigate"
         onCancel={(e) => {
@@ -345,8 +346,8 @@ export function HomeNav({ sections }: { sections: { id: string; label: string }[
           </div>
         </div>
         {/* What the browser's bars take their colour from (home-nav.module.css, Veil). */}
-        <div className={`${s.edge} ${s.edgeTop}`} aria-hidden />
-        <div className={`${s.edge} ${s.edgeBottom}`} aria-hidden />
+        {/* <div className={`${s.edge} ${s.edgeTop}`} aria-hidden />
+        <div className={`${s.edge} ${s.edgeBottom}`} aria-hidden /> */}
       </dialog>
     </>
   );
