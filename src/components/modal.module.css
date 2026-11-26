@@ -91,6 +91,41 @@
   }
 }
 
+/* side pane on wide screens, beside the column rather than over it.
+   data-side is set from modal.tsx when WIDE in lib/pages.ts matches.
+   column and pane are centred as a pair, modal.tsx shifts the column to match */
+.dialog[open][data-side] {
+  --gap: 48px;
+  --side-w: clamp(460px, calc(100% - var(--page) - var(--gap) - 80px), 680px);
+  z-index: 30;
+  display: block;
+  padding: 0;
+  /* the page stays usable around the pane */
+  pointer-events: none;
+}
+
+.dialog[data-side] .panel {
+  position: absolute;
+  top: calc(var(--nav-h) + 16px);
+  right: calc((100% - var(--page) - var(--gap) - var(--side-w)) / 2);
+  width: var(--side-w);
+  max-height: calc(100% - var(--nav-h) - 32px);
+  pointer-events: auto;
+  box-shadow: none;
+}
+
+.dialog[data-side] .scroll {
+  --gutter: 48px;
+  padding: 52px var(--gutter) 56px;
+}
+
+/* narrower than the modal, wrap code so none of it hides sideways */
+.dialog[data-side] .scroll pre {
+  font-size: 13px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
 /* only opacity animates, keeps the blur smooth */
 .dialog::backdrop {
   /* overshoot the viewport to cover ios bars */

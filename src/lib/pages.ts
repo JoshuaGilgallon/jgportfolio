@@ -3,6 +3,9 @@
 // matches the full screen modal query
 export const PHONE = "(max-width: 600px), (pointer: coarse) and (max-height: 500px)";
 
+// room for the project pane beside the column, see .dialog[data-side]
+export const WIDE = "(min-width: 1280px) and (min-height: 600px)";
+
 // null if it isn't a page on this site
 export function pageUrl(link: HTMLAnchorElement): URL | null {
   if (link.target && link.target !== "_self") return null;

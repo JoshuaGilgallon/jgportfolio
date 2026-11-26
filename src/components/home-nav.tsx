@@ -4,6 +4,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { LiquidMorph } from "@/lib/liquid-morph";
 import { LiquidSurface } from "@/lib/liquid-surface";
 import { frameOf, type Frame } from "@/lib/morph";
+import { PHONE } from "@/lib/pages";
 import { HapticTap } from "./haptic-tap";
 import { ChevronRight } from "./icons";
 import s from "./home-nav.module.css";
@@ -43,6 +44,7 @@ export function HomeNav({ sections }: { sections: { id: string; label: string }[
   const glyphRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const sheet = useRef<{ open: () => void; close: (scrolling?: boolean) => void; reset: () => void } | null>(null);
+  const warm = useRef<(() => void) | null>(null);
 
   // unmarks when the route gets hidden
   useLayoutEffect(() => {
@@ -80,6 +82,17 @@ export function HomeNav({ sections }: { sections: { id: string; label: string }[
     };
   }, [shown]);
 
+  // set up webgl while idle once the button is out, compiling on the first tap stalls the open
+  useEffect(() => {
+    if (!shown || !matchMedia(PHONE).matches) return;
+    if (typeof requestIdleCallback === "function") {
+      const idle = requestIdleCallback(() => warm.current?.(), { timeout: 2000 });
+      return () => cancelIdleCallback(idle);
+    }
+    const timer = window.setTimeout(() => warm.current?.(), 200);
+    return () => clearTimeout(timer);
+  }, [shown]);
+
   // other pages have a sticky nav
   useEffect(() => {
     const bar = document.querySelector<HTMLElement>("[data-site-nav]");
@@ -105,6 +118,10 @@ export function HomeNav({ sections }: { sections: { id: string; label: string }[
     let closing = false;
     let rest: Frame;
     let source: Frame;
+
+    warm.current = () => {
+      if (surface === undefined) surface = LiquidSurface.create(canvas);
+    };
 
     const setVeil = (v: number) => {
       dialog.style.setProperty("--veil", String(v));
@@ -271,6 +288,7 @@ export function HomeNav({ sections }: { sections: { id: string; label: string }[
     // don't leave an invisible modal behind
     return () => {
       sheet.current = null;
+      warm.current = null;
       removeEventListener("resize", recover);
       finish();
     };

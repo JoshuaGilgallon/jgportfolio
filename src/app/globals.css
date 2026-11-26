@@ -44,6 +44,18 @@
   --spring-ink: 1362ms linear(0, 0.0049 0.92%, 0.021 2.14%, 0.0459 3.36%, 0.0859 4.89%, 0.163 7.34%, 0.3543 12.84%, 0.4549 15.9%, 0.5541 19.27%, 0.6323 22.32%, 0.7053 25.69%, 0.7656 29.05%, 0.8188 32.72%, 0.8607 36.39%, 0.9004 40.98%, 0.9309 45.87%, 0.9545 51.38%, 0.9716 57.49%, 0.9836 64.53%, 0.9916 73.09%, 1);
 }
 
+/* the morphs set these every frame. nothing reads them from a parent,
+   so not inheriting them keeps each restyle to the element itself */
+@property --r {
+  syntax: "*";
+  inherits: false;
+}
+
+@property --lift {
+  syntax: "*";
+  inherits: false;
+}
+
 /* squircles, falls back to normal radius */
 
 .sq {
@@ -86,13 +98,15 @@ html {
   scrollbar-width: thin;
 }
 
-html:has(dialog[open]) {
+/* the side pane leaves the page scrollable */
+html:has(dialog[open]:not([data-side])) {
   overflow: hidden;
 }
 
 /* not for the home sheet, ios safari may tint its bars with this */
-html:has(dialog[open]:not([data-home-nav])) {
-  /* tint the scrollbar gutter along with the backdrop */
+html:has(dialog[open]:not([data-home-nav], [data-side])) {
+  /* tint the scrollbar gutter along with the backdrop.
+     modal.tsx skips --veil writes that don't change this colour, keep its maths in step */
   background: color-mix(in srgb, rgb(210 210 215) calc(var(--veil, 1) * 45%), var(--bg));
 }
 
@@ -213,6 +227,14 @@ button:disabled > .haptic-tap {
   max-width: calc(var(--page) + var(--gutter) * 2);
   margin-inline: auto;
   padding-inline: var(--gutter);
+}
+
+/* .page moves aside for the project pane on wide screens. lib/side-stage.ts sets
+   translate on each one, rather than transform on a wrapper, so fixed children stay fixed */
+
+/* cards shuffling between rows travel past the edges */
+html[data-shift] body {
+  overflow-x: clip;
 }
 
 .skip-link {

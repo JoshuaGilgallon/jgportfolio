@@ -1,6 +1,9 @@
+/* positioned for cards crossing rows, and its height animates on wide screens */
 .grid {
+  position: relative;
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+  align-content: start;
   gap: 12px;
 }
 
@@ -12,6 +15,11 @@
   padding: 22px 20px 20px 24px;
   background: var(--fill);
   transition: background-color var(--spring-smooth);
+}
+
+/* out in the side pane */
+.card[data-lifted] {
+  display: none;
 }
 
 .card[data-hover],

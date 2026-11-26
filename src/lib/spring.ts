@@ -42,4 +42,14 @@ export const morph = {
   kickShrink: { damping: 0.8, response: 0.5 },
   // cancelled pull to dismiss
   pullBack: { damping: 0.8, response: 0.3 },
+  // wide screens: cards closing or opening a gap, a touch of settle
+  shuffle: { damping: 0.82, response: 0.32 },
+  // gap between each card setting off, outwards from the change
+  shuffleStagger: 0.022,
+  // lets the pane clear the slot before its neighbours slide in
+  shuffleLead: 0.05,
+  // a card coming back into the grid, and the pane it left
+  emerge: { damping: 1, response: 0.34 },
+  emergeDelay: 0.06,
+  recede: { damping: 1, response: 0.4 },
 } satisfies Record<string, SpringSpec | number>;

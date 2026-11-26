@@ -171,9 +171,10 @@ export class LiquidSurface {
     gl: WebGL2RenderingContext,
   ) {
     this.gl = gl;
-    this.blurX = this.program(blurX);
-    this.blurY = this.program(blurY);
-    this.surface = this.program(surface);
+    // compile everything before asking about any of it, so the driver
+    // can work on them together rather than one wait each
+    const programs = [blurX, blurY, surface].map((fs) => this.compile(fs));
+    [this.blurX, this.blurY, this.surface] = programs.map((p) => this.program(p));
     for (let i = 0; i < 2; i++) {
       const t = gl.createTexture()!;
       gl.bindTexture(gl.TEXTURE_2D, t);
@@ -189,7 +190,7 @@ export class LiquidSurface {
     canvas.addEventListener("webglcontextlost", () => (this.lost = true));
   }
 
-  private program(fs: string): Program {
+  private compile(fs: string) {
     const gl = this.gl;
     const p = gl.createProgram()!;
     for (const [type, src] of [
@@ -202,6 +203,11 @@ export class LiquidSurface {
       gl.attachShader(p, s);
     }
     gl.linkProgram(p);
+    return p;
+  }
+
+  private program(p: WebGLProgram): Program {
+    const gl = this.gl;
     if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(p) ?? "link failed");
     const cache = new Map<string, WebGLUniformLocation | null>();
     return {
