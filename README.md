@@ -19,8 +19,8 @@ npm run dev                 # migrations run automatically
 
 Open <http://localhost:3000/admin> and sign in.
 
-`npm run db:seed` fills an **empty** database with demo content so you can
-see the design. None of it is real: delete it from `/admin`, or remove
+`npm run db:seed` fills an empty database with demo content so you can
+see the design. None of it is actually real: delete it from the `/admin` dashboard, or delete
 `data/portfolio.db` to start clean.
 
 ## Environment
@@ -28,31 +28,20 @@ see the design. None of it is real: delete it from `/admin`, or remove
 | Variable              | Purpose                                                     |
 | --------------------- | ----------------------------------------------------------- |
 | `ADMIN_USERNAME`      | The one admin username.                                     |
-| `ADMIN_PASSWORD_HASH` | scrypt hash from `npm run hash-password` (never plaintext). |
+| `ADMIN_PASSWORD_HASH` | scrypt hash from `npm run hash-password` (don't use plaintext). |
 | `AUTH_SECRET`         | Signs the session cookie. 32+ random bytes.                 |
 | `DATABASE_URL`        | `file:./data/portfolio.db` locally, `libsql://…` in prod.   |
 | `DATABASE_AUTH_TOKEN` | Only for remote libsql/Turso.                               |
-| `SITE_URL`            | Public origin, for canonical URLs, sitemap, RSS and HSTS.   |
+| `SITE_URL`            | Public origin   |
 
 ## Security
 
-- Passwords are stored as a salted scrypt hash. Username and password are
-  compared in constant time, and the hash is always computed so timing
-  doesn't reveal which part was wrong.
-- Sign-in is rate limited: 5 attempts per IP and 30 in total per 15 minutes,
-  held in memory, so it only counts within one server process. The IP comes
-  from `X-Forwarded-For`, so run behind a proxy that overwrites that header.
-  A determined attacker could otherwise rotate it, and could use the global
-  cap to keep you locked out for 15 minutes.
-- Sessions are signed, HTTP-only JWT cookies that expire after 8 hours.
-- `proxy.ts` redirects signed-out visitors away from `/admin`. Every admin
-  page **and every Server Action** checks the session again on its own, so
-  the proxy is never the only guard.
+- Passwords are stored as a salted scrypt hash.
+- Sign-in is rate limited (although globally, so if youre getting hacked/bruteforced you won't be able to login)
+- Sessions are signed HTTP-only JWT cookies that expire after 8 hours.
+- `proxy.ts` redirects signed-out visitors away from `/admin` and onto the main site.
 - Input is validated with zod. URLs must be `https://` (or `mailto:` for
-  links), and Markdown is rendered without raw HTML.
-- Security headers: CSP, `frame-ancestors 'none'`, `nosniff`,
-  `Referrer-Policy`, `Permissions-Policy`, and HSTS when `SITE_URL` is HTTPS.
-- `/admin` is `noindex` and disallowed in `robots.txt`.
+  links), and Markdown is rendered without using HTML.
 
 ## Deploying
 
@@ -69,53 +58,4 @@ minutes (the `content` profile in `next.config.ts`), which caps that.
 
 ## Design notes
 
-- One 680px column in light mode, with Apple's system colours and type scale
-  set in Instrument Sans (self-hosted via `next/font`).
-- **Project pane.** Clicking a project card makes the card fly out of the
-  grid and morph into a centred pane over a frosted (Gaussian-blurred) page;
-  closing morphs it back into its slot. It uses an intercepted route
-  (`src/app/(site)/@modal`) and the native `<dialog>`. The URL changes, so
-  the link is shareable, Back closes it, and a refresh shows the full
-  `/projects/[slug]` page. On phones the card grows to fill the screen
-  instead. On touch screens you can also pull the pane down
-  to dismiss it, as with an iOS sheet. It has its own overlay scrollbar
-  (`src/components/scrollbar.tsx`): a slim pill that shows while
-  scrolling, widens to be dragged with a mouse, and stays out of the way of
-  swipes. Everywhere else, scrollbars are thin and quiet.
-- **Page slides (phones).** Changing page slides the new one in from the
-  right, and going back slides it away again, on UIKit's fluid navigation
-  spring (damping 1.0, response 0.3s) via View Transitions
-  (`src/components/page-transitions.tsx`). `preloader.tsx` fetches whole
-  pages before they're tapped, from what's on screen and where a finger
-  lands. It passes `router.prefetch` the `kind` option, which Next types but
-  doesn't document, so check it after upgrading. Prefetching only runs in a
-  production build.
-- **Home navigation.** On the home page the top bar scrolls away with the
-  page and a round button blurs in at the bottom right
-  (`src/components/home-nav.tsx`). It morphs into a bottom sheet linking to
-  each section, using the same liquid morph as the project pane. A one-time
-  hint (remembered in `localStorage`) points it out.
-- **Touch.** Hover effects only apply on devices that can hover, so they
-  don't stick after a tap; presses get the same highlight instead.
-- **Motion.** Animations use Apple's own springs, ported from the Liquid
-  Glass research library. `src/lib/morph.ts` is AnimationKit's liquid
-  morph, stepped every frame: grow 1.0/0.26 (no overshoot), shrink 0.9/0.3,
-  content blurs out 0.8/0.45 and blurs in 1.0/0.3 after 30 ms, plus a kick
-  spring on the way back, all at 0.7× speed. Set `PIVOT` in `src/components/modal.tsx` for the slower
-  J-path "flying" variant. The other transitions use `--spring` and
-  `--spring-smooth` in `globals.css`. These are the same springs sampled
-  into CSS `linear()` curves; regenerate them with
-  `npx tsx scripts/springs.ts`. With reduced motion turned on, the pane
-  appears and closes without moving.
-- **Squircles.** Every rounded surface uses the `.sq` utility with a
-  nominal radius `--r`. In browsers that support `corner-shape` it draws
-  `superellipse(1.7)` over 1.53× the radius, which lands on Apple's own
-  continuous-corner curve (checked against the iOS bezier path). Elsewhere
-  it falls back to a circular radius `r`. Icon tiles use Apple's 22.37%
-  corner ratio.
-
-## License
-
-[PolyForm Noncommercial 1.0.0](LICENSE.md). You may use, change and share this
-code for any noncommercial purpose, keeping the license and its copyright
-notice with it. Commercial use isn't permitted.
+I will publish something about this on my website soon and then put the link here.
