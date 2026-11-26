@@ -288,7 +288,12 @@
    colour from the first frame without painting it. .tint keeps its full
    colour too, fading through its wrapper (WebKit checks only an element's
    own opacity), for the sides in landscape. */
+/* The blur and the tint both reach 200px past the screen's top and bottom:
+   a fixed element's inset 0 is only the viewport, and iOS draws its status
+   bar and toolbar over page that lies beyond it, which would otherwise show
+   there unveiled. */
 .dialog::backdrop {
+  inset: -200px 0;
   background: transparent;
   -webkit-backdrop-filter: blur(12px) saturate(180%);
   backdrop-filter: blur(12px) saturate(180%);
@@ -303,7 +308,7 @@
 
 .tint {
   position: fixed;
-  inset: 0;
+  inset: -200px 0;
   background: rgb(210 210 215 / 0.45);
 }
 
