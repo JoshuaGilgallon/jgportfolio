@@ -15,7 +15,7 @@ const instrument = Instrument_Sans({
 
 export const metadata: Metadata = {
   metadataBase: new URL(site.url),
-  title: { default: `${site.name} — ${site.fullName}`, template: `%s — ${site.name}` },
+  title: { default: `${site.name} - ${site.fullName}`, template: `%s - ${site.name}` },
   description: site.description,
   authors: [{ name: site.fullName }],
   openGraph: { type: "website", siteName: site.name, locale: "en_GB" },

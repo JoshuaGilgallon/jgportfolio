@@ -25,19 +25,14 @@ export default async function Home() {
       <header className={s.hero}>
         <h1 className={s.title}>Hi, I’m Josh.</h1>
         <p className={s.lead}>
-          I work on <em>cloud architecture</em> and <em>low‑level systems</em>, the two ends of the stack
-          that most people never see.
+          I work on <em>cloud architecture</em> and <em>low‑level systems</em>.
         </p>
         <div className={s.about}>
           <p>
-            At the top, that means infrastructure that scales quietly, fails gracefully, and stays easy
-            to reason about. At the bottom, it means memory, concurrency, and the instructions that
-            actually run on the machine.
+            Here's a spot for some text that i need to add but i am very lazy
           </p>
           <p>
-            Holding it all together is a love of design. I think good software should feel obvious:
-            nothing missing, nothing extra. That goes for an API, a command-line tool, and a page like
-            this one.
+            And another paragraph here for retention
           </p>
         </div>
       </header>
