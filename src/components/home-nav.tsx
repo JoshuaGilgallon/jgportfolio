@@ -98,18 +98,10 @@ export function HomeNav({ sections }: { sections: { id: string; label: string }[
     let rest: Frame;
     let source: Frame;
 
-    // The page behind fades under its blur in step with the morph (see modal.tsx).
-    let veil: Animation | null = null;
-    // Browsers that still colour their bars from theme-color (before iOS 26)
-    // take the veil's grey with it. iOS 26 reads the page (home-nav.module.css).
-    const theme = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
-    const themeColor = theme?.content;
+    // Fade the blur and tint together without changing the root background or
+    // theme-color: WebKit may use those to paint opaque browser chrome.
     const setVeil = (v: number) => {
-      if (veil) veil.currentTime = v * 1000;
-      else dialog.style.setProperty("--veil", String(v));
-      root.style.setProperty("--veil", String(v));
-      // .tint's rgb(210 210 215 / 0.45v) over the white page.
-      if (theme) theme.content = `rgb(${255 - 20.25 * v} ${255 - 20.25 * v} ${255 - 18 * v})`;
+      dialog.style.setProperty("--veil", String(v));
     };
 
     const measure = () => {
@@ -197,11 +189,7 @@ export function HomeNav({ sections }: { sections: { id: string; label: string }[
       delete button.dataset.away; // before closing, so focus can return to it
       if (dialog.open) dialog.close();
       settle();
-      veil?.cancel();
-      veil = null;
       dialog.style.removeProperty("--veil");
-      root.style.removeProperty("--veil");
-      if (theme && themeColor !== undefined) theme.content = themeColor;
     };
 
     /**
@@ -242,13 +230,10 @@ export function HomeNav({ sections }: { sections: { id: string; label: string }[
         if (dialog.open) return;
         closing = false;
         setHint(false);
+        setVeil(0);
         dialog.showModal();
         // Focus the sheet itself: a ring on its first button would look selected.
         panel.focus({ preventScroll: true });
-        try {
-          veil = dialog.animate({ opacity: [0, 1] }, { pseudoElement: "::backdrop", duration: 1000, fill: "both" });
-          veil.pause();
-        } catch {}
         button.dataset.away = "";
         if (still()) return setVeil(1);
         measure();
@@ -345,9 +330,6 @@ export function HomeNav({ sections }: { sections: { id: string; label: string }[
             </button>
           </div>
         </div>
-        {/* What the browser's bars take their colour from (home-nav.module.css, Veil). */}
-        {/* <div className={`${s.edge} ${s.edgeTop}`} aria-hidden />
-        <div className={`${s.edge} ${s.edgeBottom}`} aria-hidden /> */}
       </dialog>
     </>
   );
