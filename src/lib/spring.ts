@@ -1,14 +1,4 @@
-/**
- * Apple's spring, as used by UIKit and AnimationKit, ported from the
- * Liquid Glass research library (liquid_glass/include/liquid_glass/flex.hpp,
- * `lg::Spring1`).
- *
- * A spring is described UIKit style, by a damping ratio and a response time
- * in seconds: omega = 2π / response, stiffness k = omega², damping
- * c = 2·ζ·omega, mass 1. It is integrated with semi-implicit Euler at 240 Hz,
- * exactly like the original, so the CSS easings sampled from it (see
- * scripts/springs.ts) and the JavaScript-driven morph move identically.
- */
+// damped spring, semi-implicit euler at 240hz
 
 export type SpringSpec = { damping: number; response: number };
 
@@ -41,27 +31,15 @@ export class Spring {
   }
 }
 
-/**
- * Live defaults of AnimationKit's MorphAnimationSettings (macOS 27), read
- * from the running system; see research_morph/MORPH_ANIMATION.md.
- */
 export const morph = {
-  /** Global time scale: every morph runs at 0.7× real time. */
   speed: 0.7,
-  /**
-   * Button → menu: position and size. AnimationKit uses 0.8/0.3; this is
-   * critically damped so the pane lands without overshooting, with the
-   * response shortened to keep the same pace off the mark.
-   */
+  // slightly stiffer so it doesn't overshoot
   grow: { damping: 1, response: 0.26 },
-  /** Menu → button. */
   shrink: { damping: 0.9, response: 0.3 },
-  /** Old content blurs away. */
   blurOut: { damping: 0.8, response: 0.45 },
-  /** New content blurs in, a beat later. */
   blurIn: { damping: 1, response: 0.3 },
   secondStepDelay: 0.03,
   kickShrink: { damping: 0.8, response: 0.5 },
-  /** A pull-to-dismiss let go too early, springing back into place. */
+  // cancelled pull to dismiss
   pullBack: { damping: 0.8, response: 0.3 },
 } satisfies Record<string, SpringSpec | number>;

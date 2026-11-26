@@ -1,3 +1,3 @@
-// Runs in the browser before React starts.
+// runs before react
 import "@/lib/popstate";
 import "@/lib/haptics";

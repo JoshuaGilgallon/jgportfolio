@@ -8,7 +8,6 @@
   position: relative;
 }
 
-/* Inset separator, drawn above every row but the first. */
 .item + .item::before {
   content: "";
   position: absolute;
@@ -28,7 +27,7 @@
   }
 }
 
-/* Like iOS, the hairlines around a highlighted row disappear. */
+/* hide hairlines around the highlighted row */
 @media (hover: hover) {
   .item:has(a:hover)::before,
   .item:has(a:hover) + .item::before {
@@ -99,7 +98,7 @@ a.row:active {
   font-variant-numeric: tabular-nums;
 }
 
-/* Narrow screens: give the title the full width and move the date below it. */
+/* stack on narrow screens */
 @media (max-width: 520px) {
   .row {
     flex-direction: column;

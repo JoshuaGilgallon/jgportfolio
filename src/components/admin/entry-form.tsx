@@ -23,8 +23,7 @@ type Props = {
 export function EntryForm({ type, values, action, onDelete, publicHref }: Props) {
   const config = contentTypes[type];
   const isNew = !onDelete;
-  // Each edit bumps `version`; a save remembers the version it saved, so the
-  // form is dirty exactly when there are edits newer than the last save.
+  // dirty when there are edits newer than the last save
   const [version, setVersion] = useState(0);
   const [state, formAction, pending] = useActionState<SaveState & { version?: number }, FormData>(
     async (prev, data) => ({
@@ -63,8 +62,7 @@ export function EntryForm({ type, values, action, onDelete, publicHref }: Props)
       </div>
 
       <form
-        // Submitting by hand (rather than `action=`) stops React resetting the
-        // fields after each save, so the editor keeps exactly what was typed.
+        // manual submit stops react resetting the fields
         onSubmit={(e) => {
           e.preventDefault();
           const data = new FormData(e.currentTarget);

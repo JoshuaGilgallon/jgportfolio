@@ -13,8 +13,7 @@ const credentialsSchema = z.object({
   password: z.string().min(1).max(512),
 });
 
-// A valid hash of a random string, used when no admin is configured so that
-// failed sign-ins always take the same amount of time.
+// dummy hash so failed logins take the same time
 const DUMMY_HASH =
   "scrypt:32768:8:1:AAAAAAAAAAAAAAAAAAAAAA:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
 
@@ -46,7 +45,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           console.warn("[auth] ADMIN_USERNAME / ADMIN_PASSWORD_HASH are not set.");
         }
 
-        // Always run the expensive check so timing doesn't reveal which part was wrong.
+        // always verify so timing doesn't leak anything
         const passwordOk = await verifyPassword(parsed.data.password, hash || DUMMY_HASH);
         const usernameOk = username !== "" && safeEqual(parsed.data.username, username);
         if (!passwordOk || !usernameOk || !hash) return null;

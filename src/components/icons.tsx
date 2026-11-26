@@ -4,7 +4,6 @@ type IconProps = SVGProps<SVGSVGElement>;
 
 const base = { width: 24, height: 24, viewBox: "0 0 24 24", "aria-hidden": true } as const;
 
-/** Arrow pointing up-right, for links that leave the site. */
 export function ArrowUpRight(props: IconProps) {
   return (
     <svg {...base} fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" {...props}>
@@ -45,8 +44,6 @@ export function Check(props: IconProps) {
     </svg>
   );
 }
-
-/* Brand glyphs, drawn on a coloured tile like an iOS Settings row. */
 
 export function GitHubGlyph(props: IconProps) {
   return (

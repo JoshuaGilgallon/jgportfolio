@@ -48,7 +48,6 @@
   margin-top: 28px;
 }
 
-/* Two fields in one rounded group, divided by a hairline: the iOS sign-in form. */
 .fields {
   --r: var(--r-md);
   overflow: hidden;

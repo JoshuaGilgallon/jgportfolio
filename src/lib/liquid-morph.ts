@@ -1,70 +1,45 @@
 import { Spring, type SpringSpec } from "./spring";
 import type { Frame } from "./morph";
 
-/**
- * Apple's iOS 27 button → menu morph, ported line for line from the Liquid
- * Glass research library (liquid_glass/include/liquid_glass/morph.hpp,
- * `lg::LiquidMorph`: the "iOS menu replica", key K in the demo). Its values
- * were measured from the real UIKit morph in the iOS 27.2 Simulator, with
- * every AnimationKit layer traced frame by frame.
- *
- * Two blobs share one surface while it runs:
- * - the body starts as a circle half the button's height at the button's
- *   centre and springs out to the menu's frame;
- * - the ghost is the button itself, shrinking to a circle a quarter of its
- *   height, 25% of the way toward the menu's centre.
- *
- * Every property has its own spring, already scaled by AnimationKit's global
- * speed of 0.7 (so time runs 1:1 here). The "J" is in time, not space: for
- * 85 ms the body's vertical target is pushed 0.84 × its vertical travel past
- * the menu, so it overshoots and comes back. The body stays a capsule until
- * it is 97% open, then a spring settles its corners. For the first 0.27 s
- * the two blobs' distance field is gaussian-blurred (σ 14), so they fuse
- * like liquid.
- *
- * Not ported: the lens displacement map that warps the content (only its
- * extra blur, `lensBlur`, is).
- */
+// button to menu morph with two blobs: the body grows into the menu while
+// the ghost (the button) shrinks away. values measured from ios.
+// no lens displacement, only its blur
 
 const P = {
-  // Opening springs.
   A: { damping: 0.749, response: 0.351 },
   B: { damping: 0.87, response: 0.231 },
-  // The "J" kick on the body's vertical target.
+  // vertical overshoot
   kick: { damping: 0.686, response: 0.343 },
   kickRatio: 0.84,
   kickMax: 200,
   kickWidth: 0.085,
-  // Closing: A-type and B-type properties (body height, ghost width).
   closeA: { damping: 0.851, response: 0.449 },
   closeB: { damping: 0.688, response: 0.583 },
-  // Closing: the body is kicked toward the menu side…
+  // kick towards the menu
   closeKick: { damping: 0.833, response: 0.383 },
   closeKickRatio: 5.257,
   closeKickWidth: 0.0187,
-  // …and the returning button nudged the other way.
+  // nudge the button the other way
   ghostKick: { damping: 0.744, response: 0.505 },
   ghostKickRatio: -0.33,
   ghostKickWidth: 0.146,
-  // Corner radius settle.
   rad: { damping: 0.8, response: 0.28 },
   radTrigger: 0.97,
-  // Distance-field blur while merging (CASDFLayer.gaussianRadius 20 × 0.7).
+  // blur while the blobs merge
   gaussSigma: 14,
   gaussTime: 0.27,
   closeGaussSigma: 7.27,
   closeGaussTime: 0.414,
-  // Start circle 0.5 × button height; end circle 0.25 × height, 25% of the way.
+  // start and end circles
   bodyStart: 0.5,
   ghostEnd: 0.25,
   ghostDist: 0.25,
-  // The springs start this long after the call.
   delay: 0.0063,
   contentDelay: 0.0085,
   closeContent: { damping: 0.816, response: 0.47 },
 } satisfies Record<string, SpringSpec | number>;
 
-/** Lens blur of the content (px), at 60 fps from the start: opening, closing. */
+// lens blur per frame at 60fps, opening then closing
 const LENS_BLUR = [0, 1.06, 1.77, 2.38, 2.85, 3.03, 2.88, 2.55, 2.13, 1.71, 1.32, 0.97, 0.69, 0.46, 0.29, 0.17, 0.08, 0, 0, 0, 0];
 const LENS_BLUR_CLOSE = [0, 0.49, 1.2, 1.9, 2.48, 2.75, 2.68, 2.41, 2.05, 1.66, 1.29, 0.97, 0.69, 0.47, 0.3, 0.18, 0.09, 0, 0, 0, 0];
 
@@ -125,7 +100,6 @@ export class LiquidMorph {
   private rf = new Spring(1, 0, 1);
   private cp = new Spring();
 
-  /** Sets the trigger (button) and menu frames. */
   setEnds(trigger: Frame, menu: Frame) {
     this.a = trigger;
     this.b = menu;
@@ -207,13 +181,13 @@ export class LiquidMorph {
     if (!this.live()) this.moving = false;
   }
 
-  /** Opening progress of the body's width: 0 at the start circle, 1 at the menu (overshoots a little). */
+  // 0 to 1 by width, can overshoot
   get progress() {
     const d = this.b.w - this.bodyStart().w;
     return Math.abs(d) < 1e-3 ? 1 : (this.body.w.x - this.bodyStart().w) / d;
   }
 
-  /** The growing menu blob. Its `r` is the nominal corner radius. */
+  // r is the corner radius
   get bodyFrame(): Frame {
     if (!this.moving) return this.open ? this.b : this.bodyStart();
     const f = this.body.frame(this.kick.x);
@@ -221,33 +195,28 @@ export class LiquidMorph {
     return f;
   }
 
-  /** The shrinking button blob (always round). */
   get ghostFrame(): Frame {
     if (!this.moving) return this.open ? this.ghostEnd() : this.a;
     return this.ghost.frame(this.gkick.x);
   }
 
-  /**
-   * How far the body's corners have settled from a capsule to the menu's
-   * corners: 0 round, 1 the menu's own.
-   */
+  // 0 = capsule, 1 = menu corners
   get cornerProgress() {
     const rest = this.restRadiusFactor(true);
     return rest >= 1 ? 1 : clamp((1 - this.rf.x) / (1 - rest), 0, 1);
   }
 
-  /** Standard deviation (px) of the blur fusing the two blobs' distance field; 0 once they're a plain union. */
+  // 0 once the blobs stop blurring
   get gaussSigma() {
     if (!this.moving) return 0;
     return this.open ? (this.t < P.gaussTime ? P.gaussSigma : 0) : this.t < P.closeGaussTime ? P.closeGaussSigma : 0;
   }
 
-  /** Cross-fade of the content: 0 the button's, 1 the menu's (may overshoot a little). */
+  // content crossfade, can overshoot
   get contentProgress() {
     return this.moving ? this.cp.x : this.open ? 1 : 0;
   }
 
-  /** Extra blur of the content from the lens (px). */
   get lensBlur() {
     return this.moving ? tab(this.open ? LENS_BLUR : LENS_BLUR_CLOSE, this.t) : 0;
   }
@@ -269,7 +238,7 @@ export class LiquidMorph {
     if (!this.started) this.snap(false);
     if (o === this.open && !this.moving && (o ? this.body.w.target === this.b.w : this.ghost.w.target === this.a.w)) return;
     if (!this.moving) {
-      // Start the pair from the resting pose.
+      // start from rest
       this.body.set(o ? this.bodyStart() : this.b);
       this.ghost.set(o ? this.a : this.ghostEnd());
     }

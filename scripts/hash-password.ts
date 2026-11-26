@@ -1,7 +1,4 @@
-/**
- * Usage: npm run hash-password
- * Prompts for a password and prints the ADMIN_PASSWORD_HASH line for .env.
- */
+// usage: npm run hash-password
 import { createInterface } from "node:readline";
 import { Writable } from "node:stream";
 import { hashPassword } from "../src/lib/password";

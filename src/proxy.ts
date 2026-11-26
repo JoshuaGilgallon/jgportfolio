@@ -1,10 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 
-/**
- * Optimistic gate for /admin. Every admin page and Server Action re-checks
- * the session itself (see lib/session.ts); this only saves a round trip.
- */
+// just an early redirect, pages and actions check again
 export default auth((req) => {
   const isLogin = req.nextUrl.pathname === "/admin/login";
   if (!req.auth && !isLogin) {

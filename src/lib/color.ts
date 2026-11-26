@@ -1,14 +1,5 @@
-/**
- * A computed CSS colour (getComputedStyle) → [r, g, b] in 0..255, or null if
- * it can't be read or is fully transparent.
- *
- * Browsers serialize computed colours as `rgb()`/`rgba()`, except colours
- * made by color-mix() and the like, which come back as
- * `color(srgb r g b / a)` with channels in 0..1 (Firefox does this, and read
- * as rgb() they'd be all but black). Parsing the string, rather than painting
- * it into a canvas and reading the pixel back, also survives Firefox's
- * fingerprinting protection, which randomises canvas readback.
- */
+// parses a computed css colour to rgb, null if transparent or unreadable.
+// firefox returns color(srgb ...) for color-mix, and its canvas readback is randomised
 export function parseComputedColor(css: string): [number, number, number] | null {
   const n = (css.match(/-?[\d.]+(?:e[-+]?\d+)?/gi) ?? []).map(Number);
   if (n.length < 3 || n.some(Number.isNaN)) return null;

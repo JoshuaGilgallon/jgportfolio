@@ -8,7 +8,7 @@ import { formatDate } from "@/lib/format";
 import { requireAdmin } from "@/lib/session";
 import s from "@/components/admin/admin.module.css";
 
-// Private and per-request: blocking on the session and database is intended.
+// fine to block, it's private
 export const instant = false;
 
 export async function generateMetadata({ params }: PageProps<"/admin/[type]">): Promise<Metadata> {

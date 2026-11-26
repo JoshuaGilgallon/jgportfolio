@@ -8,29 +8,22 @@ import { HapticTap } from "./haptic-tap";
 import { ChevronRight } from "./icons";
 import s from "./home-nav.module.css";
 
-/** Remembers that the hint has been shown, so it only ever appears once. */
 const HINT_SEEN = "nav-hint-seen";
 const HINT_TIME = 5000;
-/** The content's blur at the far end of its cross-fade, px (measured on iOS: 4 pt). */
 const CONTENT_BLUR = 4;
-/** Room above the sheet for the morph's overshoot and shadow, px. */
+// space above the sheet for overshoot and shadow
 const SURFACE_HEADROOM = 160;
-/** How far fixed layers stay from the top and bottom of the viewport, px (--clear, home-nav.module.css). */
+// keep in sync with --clear in the css
 const CLEAR = 8;
-/** How far the veil runs past the end of the page, so it's still under the toolbar there, px. */
+// how far the veil runs past the page end
 const OVERHANG = 200;
 
-/**
- * Marks the home page as its HTML is parsed, ahead of the first paint, so the
- * top bar is never sticky there on phones, even before hydration. iOS Safari
- * takes its status bar's colour from a sticky bar it finds at the top, and
- * keeps that solid colour after the bar is unstuck. The script only runs from
- * server HTML; on client navigations HomeNav sets the same mark.
- */
+// marks the home page before first paint so the nav is never sticky on phones,
+// otherwise ios safari keeps its status bar a solid colour
 export function HomeMark() {
   return (
     <script
-      // Inert when React renders it in the browser, which would otherwise warn.
+      // inert on the client to avoid a react warning
       type={typeof window === "undefined" ? "text/javascript" : "text/plain"}
       suppressHydrationWarning
       dangerouslySetInnerHTML={{ __html: 'document.documentElement.dataset.home=""' }}
@@ -38,14 +31,7 @@ export function HomeMark() {
   );
 }
 
-/**
- * The home page's navigation on phones once you've scrolled. There the top bar
- * isn't sticky: it leaves with the page, and a round button blurs in at the
- * bottom right. Tapping it morphs the button into a sheet along the bottom of
- * the screen with iOS's button → menu morph (src/lib/liquid-morph.ts): the
- * sheet wells up out of the button as a second blob, the two fused into one
- * surface (src/lib/liquid-surface.ts), while the button shrinks away into it.
- */
+// floating button that morphs into a bottom sheet on phones
 export function HomeNav({ sections }: { sections: { id: string; label: string }[] }) {
   const [shown, setShown] = useState(false);
   const [hint, setHint] = useState(false);
@@ -58,9 +44,7 @@ export function HomeNav({ sections }: { sections: { id: string; label: string }[
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const sheet = useRef<{ open: () => void; close: (scrolling?: boolean) => void; reset: () => void } | null>(null);
 
-  // Marks the home page while it's on screen (the router keeps it mounted but
-  // hidden elsewhere, which runs this cleanup). On phones the stylesheets unstick
-  // the bar.
+  // unmarks when the route gets hidden
   useLayoutEffect(() => {
     document.documentElement.dataset.home = "";
     return () => {
@@ -68,7 +52,6 @@ export function HomeNav({ sections }: { sections: { id: string; label: string }[
     };
   }, []);
 
-  // The button takes over once the bar has scrolled out of sight.
   useEffect(() => {
     const bar = document.querySelector("[data-site-nav]");
     if (!bar) return;
@@ -77,14 +60,12 @@ export function HomeNav({ sections }: { sections: { id: string; label: string }[
     return () => observer.disconnect();
   }, []);
 
-  // The first time the button appears, say what it's for.
   useEffect(() => {
     if (!shown) return;
     try {
       if (localStorage.getItem(HINT_SEEN)) return;
     } catch {}
     let hide = 0;
-    // A beat after the button, so the eye finds that first.
     const show = window.setTimeout(() => {
       try {
         localStorage.setItem(HINT_SEEN, "1");
@@ -99,7 +80,7 @@ export function HomeNav({ sections }: { sections: { id: string; label: string }[
     };
   }, [shown]);
 
-  // Other pages' bar is sticky, and the status bar stays solid after it.
+  // other pages have a sticky nav
   useEffect(() => {
     const bar = document.querySelector<HTMLElement>("[data-site-nav]");
     if (shown && bar) return releaseStatusBar(bar);
@@ -118,27 +99,26 @@ export function HomeNav({ sections }: { sections: { id: string; label: string }[
     const root = document.documentElement;
     const morph = new LiquidMorph();
     const squircles = CSS.supports("corner-shape", "superellipse(2)");
-    // Made on the first open; null where there's no WebGL 2, and the blobs draw themselves instead.
+    // null without webgl2
     let surface: LiquidSurface | null | undefined;
     let frame = 0;
     let closing = false;
     let rest: Frame;
     let source: Frame;
 
-    // The page behind fades under its blur in step with the morph.
     const setVeil = (v: number) => {
       dialog.style.setProperty("--veil", String(v));
     };
 
     let pageHeight = 0;
     const setVeilHeight = (px: number) => dialog.style.setProperty("--page-height", `${px}px`);
-    /** Stretches the veil over the whole page and past its end. */
+    // stretch the veil past the end of the page
     const cover = () => {
-      dialog.style.removeProperty("--page-height"); // measure the page without it
+      dialog.style.removeProperty("--page-height"); // measure without it
       pageHeight = root.scrollHeight;
       setVeilHeight(pageHeight + OVERHANG);
     };
-    // Not while closing: that may be mid-scroll, which the overhang must stay out of.
+    // not while closing, could be mid scroll
     const recover = () => dialog.open && !closing && cover();
     addEventListener("resize", recover);
 
@@ -149,7 +129,7 @@ export function HomeNav({ sections }: { sections: { id: string; label: string }[
       rest = frameOf(panel.getBoundingClientRect(), parseFloat(ps.getPropertyValue("--r")));
       const color = ps.backgroundColor;
       [panel.style.cssText, content.style.cssText] = styles;
-      // The button is a circle, whatever its transition is doing: measure its layout box.
+      // use the layout box, ignores transforms
       const { width, right, bottom } = getComputedStyle(button);
       const size = parseFloat(width);
       source = {
@@ -164,7 +144,7 @@ export function HomeNav({ sections }: { sections: { id: string; label: string }[
       if (surface === undefined) surface = LiquidSurface.create(canvas);
       if (surface?.lost) surface = null;
       if (surface) {
-        // Room for the blobs' overshoot and the shadow, from the top of the sheet to just short of the bottom of the screen.
+        // room for overshoot and shadow
         const top = Math.max(CLEAR, Math.min(rest.cy - rest.h / 2, source.cy - source.h / 2) - SURFACE_HEADROOM);
         surface.layout(0, top, root.clientWidth, innerHeight - CLEAR - top, color);
         dialog.dataset.surface = "";
@@ -172,7 +152,7 @@ export function HomeNav({ sections }: { sections: { id: string; label: string }[
     };
 
     const blur = (px: number) => (px < 0.3 ? "none" : `blur(${px}px)`);
-    /** The site's squircle corner (.sq, globals.css), `q` of the way from a circle. */
+    // squircle exponent, q = progress from circle
     const corner = (r: number, f: Frame, q: number) =>
       squircles ? { r: Math.min(r * (1 + 0.53 * q), Math.min(f.w, f.h) / 2), k: 1 + 0.7 * q } : { r, k: 1 };
 
@@ -184,7 +164,7 @@ export function HomeNav({ sections }: { sections: { id: string; label: string }[
       const pc = Math.min(1, Math.max(0, p));
       const lift = Math.min(1, Math.max(0, morph.progress));
 
-      // The surface: both blobs as one shape, fused while the field is blurred.
+      // both blobs as one surface
       surface?.draw(
         [
           { ...g, r: Math.min(g.w, g.h) / 2, k: 1 },
@@ -194,7 +174,7 @@ export function HomeNav({ sections }: { sections: { id: string; label: string }[
         lift,
       );
 
-      // The body clips the menu, scaled to fit it, fading and sharpening in…
+      // body clips and fades in the menu
       panel.style.cssText =
         `position:fixed;left:0;top:0;margin:0;width:${b.w}px;height:${b.h}px;` +
         `transform:translate3d(${b.cx - b.w / 2}px,${b.cy - b.h / 2}px,0);--lift:${lift};` +
@@ -204,7 +184,7 @@ export function HomeNav({ sections }: { sections: { id: string; label: string }[
         `position:absolute;left:0;top:0;width:${rest.w}px;height:${rest.h}px;` +
         `transform:translate3d(${(b.w - rest.w) / 2}px,${(b.h - rest.h) / 2}px,0) scale(${s});` +
         `opacity:${pc};filter:${blur(Math.hypot(CONTENT_BLUR * (1 - pc), morph.lensBlur))}`;
-      // …while the ghost carries the button's icon away, blurring out.
+      // ghost carries the icon out
       ghost.style.cssText =
         `width:${g.w}px;height:${g.h}px;transform:translate3d(${g.cx - g.w / 2}px,${g.cy - g.h / 2}px,0)`;
       glyph.style.cssText =
@@ -214,7 +194,6 @@ export function HomeNav({ sections }: { sections: { id: string; label: string }[
       setVeil(lift);
     };
 
-    /** Hands the sheet back to its stylesheet. */
     const settle = () => {
       panel.style.cssText = content.style.cssText = ghost.style.cssText = glyph.style.cssText = "";
       delete dialog.dataset.morphing;
@@ -224,18 +203,14 @@ export function HomeNav({ sections }: { sections: { id: string; label: string }[
     const finish = () => {
       cancelAnimationFrame(frame);
       closing = false;
-      delete button.dataset.away; // before closing, so focus can return to it
+      delete button.dataset.away; // before closing so focus can return
       if (dialog.open) dialog.close();
       settle();
       dialog.style.removeProperty("--veil");
       dialog.style.removeProperty("--page-height");
     };
 
-    /**
-     * Closing, the springs take another second to settle to a hundredth of a
-     * pixel after the button looks back: hand over to the button (and the page)
-     * once nothing visible is left to move.
-     */
+    // hand over early, the springs take ages to fully settle
     const home = () => {
       const g = morph.ghostFrame;
       const b = morph.bodyFrame;
@@ -244,7 +219,6 @@ export function HomeNav({ sections }: { sections: { id: string; label: string }[
       return near(g.cx, source.cx) && near(g.cy, source.cy) && near(g.w, source.w) && near(g.h, source.h) && inside && morph.contentProgress < 0.005;
     };
 
-    /** Steps the morph until its springs come to rest. */
     const run = () => {
       cancelAnimationFrame(frame);
       dialog.dataset.morphing = "";
@@ -272,7 +246,7 @@ export function HomeNav({ sections }: { sections: { id: string; label: string }[
         setVeil(0);
         cover();
         dialog.showModal();
-        // Focus the sheet itself: a ring on its first button would look selected.
+        // focus the sheet so no button gets a ring
         panel.focus({ preventScroll: true });
         button.dataset.away = "";
         if (still()) return setVeil(1);
@@ -285,16 +259,16 @@ export function HomeNav({ sections }: { sections: { id: string; label: string }[
         if (!dialog.open || closing) return;
         if (still()) return finish();
         closing = true;
-        // The overhang lengthens the page: a scroll mustn't run on into it.
+        // don't scroll into the overhang
         if (scrolling) setVeilHeight(pageHeight);
-        // At rest the morph already sits on the sheet; measure afresh in case the window changed.
+        // remeasure in case the window changed
         if (!morph.animating) measure();
         morph.collapse();
         run();
       },
     };
 
-    // Leaving the page (the router hides it) must not leave an invisible modal behind.
+    // don't leave an invisible modal behind
     return () => {
       sheet.current = null;
       removeEventListener("resize", recover);
@@ -302,7 +276,6 @@ export function HomeNav({ sections }: { sections: { id: string; label: string }[
     };
   }, []);
 
-  /** Scrolls to a section while the sheet folds back into its button. */
   const go = (e: React.MouseEvent, id: string) => {
     if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
     e.preventDefault();
@@ -336,12 +309,11 @@ export function HomeNav({ sections }: { sections: { id: string; label: string }[
         className={s.dialog}
         aria-label="Navigate"
         onCancel={(e) => {
-          e.preventDefault(); // Esc or Android's Back: morph away instead of vanishing.
+          e.preventDefault(); // morph closed on esc or android back
           sheet.current?.close();
         }}
-        // A browser may close it regardless on a second Back; tidy up after it.
+        // browser can force close on a second back
         onClose={(e) => !e.currentTarget.open && sheet.current?.reset()}
-        // A click on the dialog itself, not on anything in it, was outside the sheet.
         onClick={(e) => e.target === e.currentTarget && sheet.current?.close()}
       >
         <canvas ref={canvasRef} className={s.surface} aria-hidden />
@@ -375,12 +347,8 @@ export function HomeNav({ sections }: { sections: { id: string; label: string }[
   );
 }
 
-/**
- * iOS Safari goes on painting its status bar a flat colour after a sticky bar
- * has been at the top, even once it's unstuck. It lets go when that element
- * leaves the layout, so this takes the bar out for two frames, with padding
- * holding its place. Call it while the bar is off screen. Returns a cleanup.
- */
+// ios safari keeps the status bar tinted after a sticky nav,
+// so pull it out of layout for two frames
 function releaseStatusBar(bar: HTMLElement) {
   const { body, documentElement: root } = document;
   let timer = 0;
@@ -389,7 +357,7 @@ function releaseStatusBar(bar: HTMLElement) {
     bar.style.display = body.style.paddingTop = "";
   };
   const release = () => {
-    // A page slide holds rendering still (page-transitions.tsx): wait it out.
+    // wait for any page slide
     if (root.dataset.nav) {
       timer = window.setTimeout(release, 100);
       return;

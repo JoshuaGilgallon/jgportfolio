@@ -9,34 +9,19 @@ import { HapticTap } from "./haptic-tap";
 import s from "./modal.module.css";
 import { Scrollbar } from "./scrollbar";
 
-/** Set to true for AnimationKit's "pivot" variant (a J-shaped flight). */
+// true for the j shaped flight
 const PIVOT = false;
-/** Blur of content as it dissolves, at its strongest. */
 const MAX_BLUR = 16;
-/** Pull the pane down this far (px), or flick it, and letting go closes it. */
+// pull distance in px to dismiss
 const DISMISS_DISTANCE = 140;
 const DISMISS_SPEED = 700;
-/** The most a full-screen pane's square corners round as it's pulled away. */
+// max corner rounding while pulling
 const PULL_RADIUS = 24;
-/** Outgoing content grows with the shape as it dissolves, up to Apple's largest blur-out scale. */
+// how much outgoing content scales up
 const BLUR_OUT_SCALE = 1.65;
 
-/**
- * The project pane. The card you click flies out of the grid and morphs into
- * it, and closing morphs it back into its slot. The motion is Apple's liquid
- * morph (src/lib/morph.ts), stepped every frame: the card's content blurs out
- * as the pane's content blurs in.
- *
- * Built on the native <dialog>: showModal() puts it in the top layer, traps
- * focus, makes the page inert and closes on Esc. Closing plays the morph,
- * then goes back in history, so the URL and the back button always agree
- * with what's on screen.
- *
- * Next.js keeps visited routes mounted but hidden (React <Activity>), and
- * hiding runs effect cleanups, so the dialog is opened on show and closed on
- * hide. Otherwise a hidden route could leave an invisible modal holding the
- * page inert.
- */
+// project pane that morphs out of its card. native dialog for focus trapping.
+// opens and closes with visibility since next keeps hidden routes mounted
 export function Modal({ children, labelledBy }: { children: React.ReactNode; labelledBy: string }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -56,8 +41,7 @@ export function Modal({ children, labelledBy }: { children: React.ReactNode; lab
     const closeButton = closeRef.current;
     if (!dialog || !panel || !scroll || !ghost || !rail || !closeButton) return;
 
-    // Return focus to whatever opened the modal ourselves, with preventScroll:
-    // the dialog's built-in restore would scroll the page to reveal it.
+    // restore focus manually, the built in one scrolls the page
     const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     opener?.blur();
     if (!dialog.open) dialog.showModal();
@@ -67,16 +51,14 @@ export function Modal({ children, labelledBy }: { children: React.ReactNode; lab
     let frame = 0;
     let card: HTMLElement | null = null;
 
-    // The page behind fades under its blur in step with the morph. Driven by
-    // hand (currentTime) rather than played, so it can never drift from it.
-    // Engines that can't animate ::backdrop get a custom property instead.
+    // scrubbed by hand so it stays in sync
+    // custom property if ::backdrop can't be animated
     let veil: Animation | null = null;
     try {
       veil = dialog.animate({ opacity: [0, 1] }, { pseudoElement: "::backdrop", duration: 1000, fill: "both" });
       veil.pause();
     } catch {}
-    // The root carries it too, to tint the reserved scrollbar strip that
-    // the backdrop can't reach (see globals.css).
+    // root gets it too for the scrollbar gutter
     const root = document.documentElement;
     const setVeil = (v: number) => {
       if (veil) veil.currentTime = v * 1000;
@@ -111,11 +93,8 @@ export function Modal({ children, labelledBy }: { children: React.ReactNode; lab
       };
     }
 
-    // ---- Measuring ----
-
     const radiusOf = (el: Element) => parseFloat(getComputedStyle(el).getPropertyValue("--r")) || 0;
 
-    /** Where the pane sits when it's at rest, laid out by its stylesheet. */
     const restFrame = (): Frame => {
       const panelStyle = panel.style.cssText;
       const scrollStyle = scroll.style.cssText;
@@ -134,11 +113,10 @@ export function Modal({ children, labelledBy }: { children: React.ReactNode; lab
       return null;
     };
 
-    /** The card's frame, or (if it's gone) a slightly smaller pane to fade from. */
+    // card frame, or a smaller pane if it's gone
     const sourceFrame = (rest: Frame): Frame =>
       card ? frameOf(card.getBoundingClientRect(), radiusOf(card)) : { ...rest, w: rest.w * 0.9, h: rest.h * 0.9 };
 
-    /** The element's background, or `fallback` if it's unreadable or clear. */
     const rgb = (el: Element, fallback: number[]) =>
       parseComputedColor(getComputedStyle(el).backgroundColor) ?? fallback;
     let fromColor = [245, 245, 247];
@@ -146,7 +124,6 @@ export function Modal({ children, labelledBy }: { children: React.ReactNode; lab
     let ghostPlus: HTMLElement | null = null;
     let toColor = [255, 255, 255];
 
-    /** A still copy of the card's content to dissolve, without its link. */
     const fillGhost = () => {
       ghost.replaceChildren();
       ghostPlus = null;
@@ -162,9 +139,7 @@ export function Modal({ children, labelledBy }: { children: React.ReactNode; lab
       fromColor = rgb(card, [245, 245, 247]);
     };
 
-    // ---- Drawing ----
-
-    /** Below 1 while a pull-to-dismiss has already faded the page in. */
+    // below 1 if a pull already faded the page
     let veilScale = 1;
 
     const morph = new MorphAnimation();
@@ -178,7 +153,7 @@ export function Modal({ children, labelledBy }: { children: React.ReactNode; lab
     };
     toColor = rgb(panel, toColor);
 
-    // Sub-pixel blur is invisible but still costs a filter pass per frame.
+    // skip invisible blur, it's still expensive
     const blur = (amount: number) => (amount * MAX_BLUR < 0.3 ? "none" : `blur(${amount * MAX_BLUR}px)`);
 
     const draw = () => {
@@ -196,22 +171,19 @@ export function Modal({ children, labelledBy }: { children: React.ReactNode; lab
       ghost.style.cssText =
         `opacity:${morph.sourceOpacity};filter:${blur(morph.sourceBlur)};` +
         `transform:scale(${Math.min(BLUR_OUT_SCALE, Math.max(1, f.w / ghostWidth))})`;
-      // The scrollbar dissolves with the content it belongs to. It keeps its
-      // resting height rather than being squeezed, and rides the pane's right
-      // edge: held to the top, the bottom or in between, as far as it's scrolled.
+      // keep its height and ride the right edge
       const overflow = scroll.scrollHeight - scroll.clientHeight;
       const scrolled = overflow > 0 ? Math.min(1, Math.max(0, scroll.scrollTop / overflow)) : 0;
       rail.style.cssText =
         `position:absolute;z-index:1;top:0;right:0;width:16px;height:${restSize.h}px;` +
         `transform:translateY(${(f.h - restSize.h) * scrolled}px);` +
         `opacity:${morph.targetOpacity};filter:${blur(morph.targetBlur)}`;
-      // The card's dark "+" would linger as a smudge, so it leaves first.
+      // card's plus goes first so it doesn't smudge
       if (ghostPlus) ghostPlus.style.opacity = String(morph.sourceOpacity ** 3);
       closeButton.style.opacity = String(morph.targetOpacity);
       setVeil(p * veilScale);
     };
 
-    /** Hands the pane back to its stylesheet once it has landed. */
     const settle = () => {
       panel.style.cssText = "";
       scroll.style.cssText = "";
@@ -223,9 +195,7 @@ export function Modal({ children, labelledBy }: { children: React.ReactNode; lab
       delete dialog.dataset.morphing;
     };
 
-    // Both ways, the pane hands over (to the stylesheet, or to the real card)
-    // as soon as it's indistinguishable from where it's going, rather than
-    // waiting out the springs' invisible tails.
+    // hand over once it looks done, not when the springs settle
     const at = (a: Frame) => {
       const f = morph.shape;
       const near = (x: number, y: number) => Math.abs(x - y) < 0.5;
@@ -254,8 +224,7 @@ export function Modal({ children, labelledBy }: { children: React.ReactNode; lab
       frame = requestAnimationFrame(tick);
     };
 
-    // If the pane's content changes size mid-flight (it streamed in, or the
-    // window was resized), the springs simply retarget to the new frame.
+    // retarget if the size changes mid flight
     const resize = new ResizeObserver(() => {
       if (!("morphing" in dialog.dataset) || closing) return;
       rest = restFrame();
@@ -263,8 +232,6 @@ export function Modal({ children, labelledBy }: { children: React.ReactNode; lab
       aim();
     });
     resize.observe(scroll.firstElementChild ?? scroll);
-
-    // ---- Open ----
 
     card = findCard();
     fillGhost();
@@ -275,22 +242,19 @@ export function Modal({ children, labelledBy }: { children: React.ReactNode; lab
     morph.expand();
     run();
 
-    // ---- Close ----
-
-    /** `fling`: where (and how fast) a pull-to-dismiss let go of the pane. */
+    // fling = release point and speed of a pull
     const close = (fling?: { dy: number; v: number }) => {
       if (closing) return;
       closing = true;
       cancelAnimationFrame(pullFrame);
       if (!("morphing" in dialog.dataset)) {
-        // At rest: measure the pane as it is now (its content may have
-        // scrolled or grown) and start the morph from there.
-        const r = radiusOf(panel); // a pull may have rounded the corners
+        // remeasure since content may have scrolled or grown
+        const r = radiusOf(panel); // a pull may have rounded these
         rest = { ...restFrame(), r };
         restSize = { w: rest.w, h: rest.h };
         dialog.dataset.morphing = "";
       }
-      // The card may have moved since it opened (e.g. the window resized).
+      // card may have moved
       card = findCard() ?? card;
       if (card) card.style.visibility = "hidden";
       fillGhost();
@@ -302,12 +266,6 @@ export function Modal({ children, labelledBy }: { children: React.ReactNode; lab
     };
     closeFn.current = () => close();
 
-    // ---- Pull down to dismiss (touch) ----
-    // As with an iOS sheet: with the content scrolled to the top, dragging
-    // down moves the pane with the finger and lets the page show through.
-    // Let go far or fast enough and it morphs home carrying the finger's
-    // speed; otherwise it springs back into place.
-
     type Pull = { x: number; y: number; from: number; dy: number; v: number; t: number; engaged: boolean };
     let pull: Pull | null = null;
     let pullFrame = 0;
@@ -315,7 +273,7 @@ export function Modal({ children, labelledBy }: { children: React.ReactNode; lab
 
     const setPull = (dy: number) => {
       panel.style.transform = dy > 0.25 ? `translate3d(0,${dy}px,0)` : "";
-      // A full-screen pane has square corners; they round as it comes away.
+      // square corners round as it comes away
       panel.style.removeProperty("--r");
       const rounded = Math.min(PULL_RADIUS, dy);
       if (rounded > radiusOf(panel)) panel.style.setProperty("--r", `${rounded}px`);
@@ -337,15 +295,14 @@ export function Modal({ children, labelledBy }: { children: React.ReactNode; lab
       const dx = t.clientX - pull.x;
       const dy = t.clientY - pull.y;
       if (!pull.engaged) {
-        // Only a downward drag that starts with the content at its top;
-        // anything else is an ordinary scroll (or a sideways code block).
+        // only downward drags from the top, the rest scrolls
         if (scroll.scrollTop > 0 || dy <= 0 || Math.abs(dx) > Math.abs(dy)) {
           if (Math.hypot(dx, dy) > 8) pull = null;
           return;
         }
         if (dy < 6) return;
         pull.engaged = true;
-        pull.y += 6; // the slop before it engaged isn't part of the pull
+        pull.y += 6; // ignore the touch slop
       }
       e.preventDefault();
       const offset = Math.max(0, pull.from + t.clientY - pull.y);
@@ -360,7 +317,7 @@ export function Modal({ children, labelledBy }: { children: React.ReactNode; lab
       const p = pull;
       pull = null;
       if (!p?.engaged) return;
-      // A finger that stopped before lifting has no speed left to carry.
+      // no velocity if the finger stopped first
       if (e.timeStamp - p.t > 80) p.v = 0;
       if (p.dy > DISMISS_DISTANCE || (p.v > DISMISS_SPEED && p.dy > 16)) return close({ dy: p.dy, v: p.v });
       settleBack.x = p.dy;
@@ -403,7 +360,7 @@ export function Modal({ children, labelledBy }: { children: React.ReactNode; lab
     };
   }, [router]);
 
-  // Falls back to a plain close, so the page can never be left inert.
+  // plain close as a fallback so the page isn't stuck
   const close = () => {
     if (closeFn.current) return closeFn.current();
     dialogRef.current?.close();
@@ -416,11 +373,9 @@ export function Modal({ children, labelledBy }: { children: React.ReactNode; lab
       className={s.dialog}
       aria-labelledby={labelledBy}
       onCancel={(e) => {
-        e.preventDefault(); // Esc: morph back instead of vanishing.
+        e.preventDefault();
         close();
       }}
-      // The dialog fills the screen around the pane, so a click that lands
-      // on the dialog element itself was outside the pane.
       onClick={(e) => e.target === e.currentTarget && close()}
     >
       <div ref={panelRef} className={`${s.panel} sq`}>
@@ -428,7 +383,7 @@ export function Modal({ children, labelledBy }: { children: React.ReactNode; lab
         <div ref={scrollRef} className={s.scroll}>
           <div>{children}</div>
         </div>
-        {/* Unstyled at rest; the morph sizes and fades it (see draw). */}
+        {/* sized and faded by the morph */}
         <div ref={railRef}>
           <Scrollbar target={scrollRef} flash={1800} />
         </div>

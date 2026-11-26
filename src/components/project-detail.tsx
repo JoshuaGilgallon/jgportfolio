@@ -6,10 +6,7 @@ import a from "@/app/(site)/article.module.css";
 import { ArrowUpRight } from "./icons";
 import { Markdown } from "./markdown";
 
-/**
- * A project's full detail. Shared by the modal (opened from the home page)
- * and the standalone /projects/[slug] page (direct visits and refreshes).
- */
+// shared by the modal and the full page
 export async function ProjectDetail({ slug, inModal = false }: { slug: Promise<string>; inModal?: boolean }) {
   const project = await getProject(await slug);
   if (!project) notFound();
@@ -47,7 +44,7 @@ export async function ProjectDetail({ slug, inModal = false }: { slug: Promise<s
       </header>
       {project.body.trim() && (
         <div className={a.body}>
-          {/* The header shows at once; a long, highlighted write-up streams in after. */}
+          {/* body streams in after the header */}
           <Suspense fallback={<div className={a.bodyPending} />}>
             <Markdown>{project.body}</Markdown>
           </Suspense>

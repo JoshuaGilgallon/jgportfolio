@@ -3,9 +3,7 @@ import type { NextConfig } from "next";
 const isDev = process.env.NODE_ENV !== "production";
 const isHttps = (process.env.SITE_URL ?? "").startsWith("https://");
 
-// No third-party origins are used anywhere. Next.js inlines its bootstrap
-// scripts, so 'unsafe-inline' stays for scripts (nonces would force every
-// page to render dynamically and give up static prerendering).
+// unsafe-inline is needed for next's inline scripts, nonces would break static pages
 const csp = [
   "default-src 'self'",
   `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
@@ -34,10 +32,8 @@ const nextConfig: NextConfig = {
   partialPrefetching: true,
   poweredByHeader: false,
   cacheLife: {
-    // Content changes only through /admin, which calls updateTag() so edits
-    // show immediately. Tag state lives in server memory, though, so a
-    // restart (or a second instance) can miss an invalidation; regenerating
-    // in the background every 10 minutes bounds that to minutes, not forever.
+    // admin edits invalidate tags straight away
+    // this is just a fallback in case one gets missed
     content: {
       stale: 300,
       revalidate: 600,

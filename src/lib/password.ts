@@ -1,9 +1,6 @@
 import { createHash, randomBytes, scrypt, timingSafeEqual, type ScryptOptions } from "node:crypto";
 
-/**
- * Password hashes are stored as `scrypt:N:r:p:salt:hash` (base64url).
- * No `$` characters, so the value survives Next.js' .env variable expansion.
- */
+// stored as scrypt:n:r:p:salt:hash, no $ so .env doesn't expand it
 const PARAMS = { N: 2 ** 15, r: 8, p: 1 } as const;
 const KEY_LENGTH = 64;
 
@@ -33,7 +30,7 @@ export async function verifyPassword(password: string, stored: string) {
   return actual.length === expected.length && timingSafeEqual(actual, expected);
 }
 
-/** Constant-time string comparison that doesn't leak length. */
+// constant time, doesn't leak length
 export function safeEqual(a: string, b: string) {
   const ha = createHash("sha256").update(a).digest();
   const hb = createHash("sha256").update(b).digest();

@@ -1,7 +1,4 @@
-/**
- * Describes each kind of entry the admin can manage. Shared by the server
- * (validation, queries) and the client (rendering the editor form).
- */
+// admin content types, shared by server and client
 
 export type FieldType = "text" | "textarea" | "markdown" | "url" | "date" | "toggle" | "select";
 
@@ -112,7 +109,6 @@ export const contentTypeKeys = Object.keys(contentTypes) as ContentType[];
 
 export const isContentType = (value: string): value is ContentType => value in contentTypes;
 
-/** Every editable value travels to the form as a string or boolean. */
 export type EntryValues = Record<string, string | boolean>;
 
 export type SaveState = {

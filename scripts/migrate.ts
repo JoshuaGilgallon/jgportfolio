@@ -1,7 +1,4 @@
-/**
- * Applies pending migrations. Runs automatically before `dev` and `build`,
- * so the tables always exist when Next.js prerenders pages.
- */
+// runs before dev and build
 import { mkdirSync } from "node:fs";
 import { createClient } from "@libsql/client";
 import { drizzle } from "drizzle-orm/libsql";

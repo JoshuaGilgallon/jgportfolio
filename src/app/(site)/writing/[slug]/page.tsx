@@ -7,8 +7,7 @@ import { getPost, getPosts } from "@/lib/content";
 import { formatLongDate, readingTime } from "@/lib/format";
 import a from "../../article.module.css";
 
-// Cache Components needs at least one param to validate the route at build
-// time; an empty site uses a placeholder that resolves to a 404.
+// the build needs at least one param, so use a placeholder that 404s
 const PLACEHOLDER = "__none__";
 
 export async function generateStaticParams() {

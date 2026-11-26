@@ -9,7 +9,7 @@
   padding-inline: var(--gutter);
 }
 
-/* ---------- Top bar ---------- */
+/* top bar */
 
 .bar {
   position: sticky;
@@ -69,7 +69,7 @@
   height: 14px;
 }
 
-/* ---------- Segmented control ---------- */
+/* segmented control */
 
 .tabsWrap {
   margin: 28px 0 36px;
@@ -127,7 +127,7 @@
     0 3px 1px rgb(0 0 0 / 0.04);
 }
 
-/* ---------- Headings and buttons ---------- */
+/* headings and buttons */
 
 .head {
   display: flex;
@@ -179,7 +179,7 @@
   cursor: default;
 }
 
-/* ---------- List ---------- */
+/* list */
 
 .list {
   --r: var(--r-lg);
@@ -305,7 +305,7 @@
   color: var(--label-3);
 }
 
-/* ---------- Editor ---------- */
+/* editor */
 
 .editorHead {
   display: grid;
@@ -444,8 +444,6 @@
   color: var(--danger);
 }
 
-/* Markdown editor */
-
 .markdown {
   display: grid;
   gap: 10px;
@@ -483,8 +481,6 @@
   color: var(--label-3);
 }
 
-/* Toggle row */
-
 .toggleField {
   --r: var(--r-md);
   flex-direction: row;
@@ -508,7 +504,6 @@
   margin: 2px 0 0;
 }
 
-/* iOS switch: 51 × 31 track, 27pt knob. */
 .switch {
   position: relative;
   flex: none;
@@ -544,8 +539,6 @@
 .switch:checked::before {
   transform: translateX(20px);
 }
-
-/* Save bar: sticks to the bottom of the viewport, edge to edge. */
 
 .saveBar {
   position: sticky;
@@ -614,7 +607,7 @@
   background: color-mix(in srgb, var(--danger) 20%, transparent);
 }
 
-/* "Saved" fades away on its own; no timers needed. */
+/* "saved" fades out by itself */
 .saved {
   animation: fade-out var(--spring-smooth) 1.6s both;
 }

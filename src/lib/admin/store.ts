@@ -5,10 +5,7 @@ import { db, schema } from "@/lib/db";
 import { isoDate, slugify } from "@/lib/format";
 import type { ContentType, EntryValues } from "./config";
 
-/**
- * Table access and validation for the admin. Nothing here checks the
- * session; callers (pages and actions) must call requireAdmin() first.
- */
+// no auth checks here, callers must do it
 
 export const tables = {
   posts: schema.posts,
@@ -118,7 +115,6 @@ export async function nextPosition(type: Exclude<ContentType, "posts">) {
   return (row?.value ?? -1) + 1;
 }
 
-/** Flattens a row into the strings and booleans the editor form expects. */
 export function toFormValues(row: Record<string, unknown>): EntryValues {
   const values: EntryValues = {};
   for (const [key, value] of Object.entries(row)) {

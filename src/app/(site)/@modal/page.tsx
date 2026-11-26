@@ -1,4 +1,4 @@
-// Navigating back to "/" with a Link clears the modal slot.
+// clears the modal when navigating home
 export default function NoModal() {
   return null;
 }

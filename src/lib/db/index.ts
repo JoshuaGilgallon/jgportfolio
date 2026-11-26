@@ -3,7 +3,7 @@ import { createClient, type Client } from "@libsql/client";
 import { drizzle } from "drizzle-orm/libsql";
 import * as schema from "./schema";
 
-// Reuse one client across hot reloads in development.
+// reuse across hot reloads
 const globalForDb = globalThis as unknown as { libsql?: Client };
 
 const client =

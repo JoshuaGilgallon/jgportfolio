@@ -11,7 +11,7 @@
   color: var(--label-3);
 }
 
-/* Room to scroll the footer clear of the home page's floating button. */
+/* room to clear the floating button */
 @media (max-width: 600px), (pointer: coarse) and (max-height: 500px) {
   :global(html[data-home]) .footer {
     padding-bottom: calc(96px + env(safe-area-inset-bottom));

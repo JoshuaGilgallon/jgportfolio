@@ -6,8 +6,8 @@ FROM base AS deps
 COPY package.json package-lock.json ./
 RUN npm ci
 
-# Only compiles. Pages are prerendered from the database, which can't be
-# reached during an image build, so that step happens at container start.
+# compile only, the database isn't reachable here
+# pages get prerendered at container start
 FROM base AS build
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
@@ -17,9 +17,9 @@ RUN node_modules/.bin/next build --experimental-build-mode compile \
 
 FROM base AS run
 ENV NODE_ENV=production
-# The full node_modules is kept: startup needs tsx to run migrations.
+# startup needs tsx for migrations
 COPY --from=build --chown=node:node /app ./
-# Startup recreates .next here.
+# startup recreates .next here
 RUN chown node:node /app
 USER node
 EXPOSE 3000

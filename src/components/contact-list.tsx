@@ -23,7 +23,6 @@ function Tile({ kind }: { kind: string }) {
   );
 }
 
-/** Contact rows in the style of iOS Settings: icon tile, label, value. */
 export function ContactList({ links }: { links: Link[] }) {
   return (
     <ul className={`${s.list} sq`}>

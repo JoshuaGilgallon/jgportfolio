@@ -1,6 +1,6 @@
 import { morph, Spring, type SpringSpec } from "./spring";
 
-/** A rounded rectangle on screen: centre, size and corner radius, in CSS px. */
+// centre, size and radius in css px
 export type Frame = { cx: number; cy: number; w: number; h: number; r: number };
 
 export function frameOf(rect: DOMRect, r: number): Frame {
@@ -9,25 +9,8 @@ export function frameOf(rect: DOMRect, r: number): Frame {
 
 const clamp = (x: number, lo = 0, hi = 1) => Math.min(hi, Math.max(lo, x));
 
-/**
- * Apple's liquid morph (a button growing into a menu or card, and back),
- * ported line for line from the Liquid Glass research library
- * (liquid_glass/include/liquid_glass/morph.hpp, `lg::MorphAnimation`), whose
- * spring values were read from AnimationKit's live MorphAnimationSettings.
- *
- * - The frame's position and size spring from the source to the target
- *   (grow 1.0/0.26, shrink 0.9/0.3). Growing never overshoots; shrinking is
- *   slightly under-damped, so it lands with a little follow-through.
- * - The old content blurs out (0.8/0.45) while the new content blurs in
- *   (1.0/0.3) 30 ms later.
- * - On the way back, a "kick" impulse on a separate spring gives the size one
- *   soft bounce.
- * - Everything runs at AnimationKit's global speed, 0.7.
- *
- * Optional "pivot" mode is the library's flying variant: the shape first
- * heads for an intermediate frame on a J-shaped path (eject 0.75/0.5), then
- * is retargeted to the destination (absorb 0.8/0.7) with its velocity kept.
- */
+// springs a shape between two frames while the content crossfades.
+// pivot mode flies it along a j shaped path first
 export class MorphAnimation {
   private a!: Frame;
   private b!: Frame;
@@ -50,7 +33,7 @@ export class MorphAnimation {
     return this.growing;
   }
 
-  /** Sets the source and target frames. Targets already in flight are updated in place. */
+  // retargets if already moving
   setEnds(source: Frame, target: Frame) {
     this.a = source;
     this.b = target;
@@ -71,11 +54,7 @@ export class MorphAnimation {
     this.delay = 0;
   }
 
-  /**
-   * Moves the shape off its spring by (dx, dy) px, travelling at (vx, vy)
-   * px/s of real time: e.g. where a finger let go of it. The springs carry
-   * on from there with that velocity.
-   */
+  // offset by a drag, keeping its velocity
   nudge(dx: number, dy: number, vx = 0, vy = 0) {
     this.px.x += dx;
     this.py.x += dy;
@@ -126,7 +105,7 @@ export class MorphAnimation {
     return !still || this.delay > 0;
   }
 
-  /** 0 at the source frame, 1 at the target (may overshoot a little). */
+  // 0 to 1, can overshoot
   get progress() {
     const dw = this.b.w - this.a.w;
     const dh = this.b.h - this.a.h;
@@ -135,7 +114,6 @@ export class MorphAnimation {
     return this.in.x;
   }
 
-  /** The morphing frame right now. */
   get shape(): Frame {
     const p = clamp(this.progress);
     const k = 1 + 0.06 * this.kick.x;
@@ -145,19 +123,16 @@ export class MorphAnimation {
     return { cx: this.px.x, cy: this.py.x, w, h, r };
   }
 
-  /** How far the kick is from rest, as a fraction of the size. */
   get kickAmount() {
     return Math.abs(0.06 * this.kick.x);
   }
 
-  // Content inside the shape: the old content blurs out, the new blurs in.
   get sourceOpacity() {
     return clamp(1 - this.out.x * 1.6);
   }
   get targetOpacity() {
     return clamp((this.in.x - 0.35) / 0.65);
   }
-  /** 0..1, a fraction of the content's maximum blur. */
   get sourceBlur() {
     return clamp(this.out.x);
   }
@@ -176,7 +151,7 @@ export class MorphAnimation {
     this.delay = morph.secondStepDelay;
     if (!grow) this.kick.v -= 4;
     if (this.pivot) {
-      // Stage 1: head for the intermediate frame on the J path.
+      // head to the midpoint first
       const from = this.shape;
       const ratio = grow ? pivot.growRatio : pivot.shrinkRatio;
       const dy = to.cy - from.cy;
@@ -199,7 +174,6 @@ export class MorphAnimation {
   }
 }
 
-/** AnimationKit's pivot ("flying") settings. */
 const pivot = {
   eject: { damping: 0.75, response: 0.5 },
   absorb: { damping: 0.8, response: 0.7 },

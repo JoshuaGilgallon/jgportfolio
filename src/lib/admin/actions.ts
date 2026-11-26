@@ -9,11 +9,7 @@ import { requireAdmin } from "@/lib/session";
 import { contentTypeKeys, type ContentType, type SaveState } from "./config";
 import { nextPosition, parseEntry, tables } from "./store";
 
-/*
- * Every action re-checks the session before touching anything: Server
- * Actions are public POST endpoints, and bound arguments come back from the
- * client, so `type` and `id` are validated here too.
- */
+// server actions are public, so check the session and validate every arg
 
 const typeSchema = z.enum(contentTypeKeys as [ContentType, ...ContentType[]]);
 const idSchema = z.number().int().positive();

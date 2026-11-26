@@ -3,7 +3,7 @@ import { ImageResponse } from "next/og";
 export const size = { width: 180, height: 180 };
 export const contentType = "image/png";
 
-// iOS applies its own squircle mask to home-screen icons, so this stays square.
+// square because ios masks it
 export default function AppleIcon() {
   return new ImageResponse(
     (

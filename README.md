@@ -1,14 +1,11 @@
-# Josh — portfolio
+# Portfolio
 
-A small, fast personal site with a private `/admin` for managing projects,
+A small fast personal site with a private `/admin` for managing projects,
 writing, publications and contact links.
 
-- **Next.js 16** (App Router, Cache Components). Public pages are prerendered
-  and cached; every admin change calls `updateTag`, so the site stays static
-  until the moment something changes.
-- **SQLite via libsql + Drizzle**. A local file in development; any libsql
-  URL (e.g. Turso) in production.
-- **Auth.js** credentials provider with a single admin defined in `.env`.
+- **Next.js 16**
+- **SQLite via libsql + Drizzle**
+- **Auth.js**
 
 ## Getting started
 
@@ -116,3 +113,9 @@ minutes (the `content` profile in `next.config.ts`), which caps that.
   continuous-corner curve (checked against the iOS bezier path). Elsewhere
   it falls back to a circular radius `r`. Icon tiles use Apple's 22.37%
   corner ratio.
+
+## License
+
+[PolyForm Noncommercial 1.0.0](LICENSE.md). You may use, change and share this
+code for any noncommercial purpose, keeping the license and its copyright
+notice with it. Commercial use isn't permitted.

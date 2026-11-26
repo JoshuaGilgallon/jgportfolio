@@ -3,12 +3,7 @@ import type { Project } from "@/lib/db/schema";
 import { splitTags } from "@/lib/format";
 import s from "./project-card.module.css";
 
-/**
- * Opens the project in a pane over the page (an intercepted route); the
- * card itself morphs into the pane (see modal.tsx, which finds it by
- * `data-morph-source`). The "+" follows apple.com's cards that expand into
- * an overlay. scroll={false} keeps the page where it is underneath.
- */
+// opens the modal, scroll={false} keeps the page in place
 export function ProjectCard({ project }: { project: Project }) {
   const tags = splitTags(project.tags);
 

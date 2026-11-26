@@ -1,5 +1,4 @@
-# Written for Dokploy: no published ports or container names. Add a domain in
-# the Domains tab pointing at service "app", port 3000.
+# for dokploy. add a domain pointing at service "app", port 3000
 services:
   app:
     build: .
@@ -8,7 +7,7 @@ services:
     environment:
       DATABASE_URL: http://portfolio-db:8080
       SITE_URL: ${SITE_URL:?set SITE_URL}
-      # Keeps Auth.js redirects on the public address behind the proxy.
+      # keeps auth redirects on the public url
       AUTH_URL: ${SITE_URL}
       AUTH_SECRET: ${AUTH_SECRET:?set AUTH_SECRET}
       ADMIN_USERNAME: ${ADMIN_USERNAME:?set ADMIN_USERNAME}
@@ -32,8 +31,7 @@ services:
     networks:
       - internal
 
-  # SQLite served over HTTP by libSQL. It has no auth, so it stays on the
-  # private network: don't publish its port or give it a domain.
+  # libsql has no auth, so don't expose it
   portfolio-db:
     image: ghcr.io/tursodatabase/libsql-server:v0.24.33
     restart: unless-stopped
@@ -42,7 +40,7 @@ services:
     volumes:
       - sqlite-data:/var/lib/sqld
     healthcheck:
-      # The image has bash but no curl or wget.
+      # no curl or wget in this image
       test:
         - CMD
         - bash

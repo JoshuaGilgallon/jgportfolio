@@ -5,44 +5,29 @@ import { useEffect, useLayoutEffect, useRef } from "react";
 import { depthOf, pageUrl, PHONE } from "@/lib/pages";
 import { interceptPopState } from "@/lib/popstate";
 
-/** If the next page hasn't rendered by now, show it without a slide rather than hold a frozen screen. */
+// give up on the slide if rendering takes too long
 const MAX_WAIT = 700;
 
 type Waiting = { path: string; arrive?: () => void; done: () => void };
 
 const keyOf = (url: { pathname: string; hash: string }) => url.pathname + url.hash;
 
-/**
- * Page changes on phones, as in an iOS or One UI app: going deeper, the new
- * page slides in from the right over the old one; going back, the top page
- * slides away to uncover the one beneath. Desktop is left alone.
- *
- * It uses the browser's View Transitions: the old and new screens become two
- * snapshots that the compositor moves (globals.css, "Page slides"), so nothing
- * is laid out or painted while they move, however busy the page is.
- *
- * - Links: the click is taken over before next/link sees it, so the old screen
- *   can be captured before the router renders the new one.
- * - Back and forward: the popstate event is held back for the same reason,
- *   then replayed to the router. Where the browser has already animated the
- *   change itself (an iOS edge swipe), nothing more is played.
- * - Scroll: going back returns to where you were, so restoration is ours on
- *   phones; the browser's would move the old screen before it's captured.
- */
+// slide transitions on phones using view transitions.
+// clicks and popstate are held back so the old screen gets captured first
 export function PageTransitions() {
   const router = useRouter();
   const pathname = usePathname();
   const waiting = useRef<Waiting | null>(null);
-  /** The URL on screen, which `location` runs ahead of during a traversal. */
+  // current url, location updates early on back/forward
   const shown = useRef("");
 
-  // The router has rendered the page a transition is waiting for.
+  // next page has rendered
   useLayoutEffect(() => {
     shown.current = pathname + location.hash;
     const next = waiting.current;
     if (!next || next.path !== pathname) return;
     waiting.current = null;
-    // A task later, so the router's own scrolling and effects have run.
+    // wait a task for router scroll and effects
     setTimeout(() => {
       next.arrive?.();
       next.done();
@@ -54,34 +39,32 @@ export function PageTransitions() {
 
     const phone = matchMedia(PHONE);
     const still = matchMedia("(prefers-reduced-motion: reduce)");
-    /** Scroll position of each URL (for Back and Forward), and of each page (for back links). */
     const entries = new Map<string, number>();
     const pages = new Map<string, number>();
     const remember = (key: string, leaving: boolean) => {
       entries.set(key, scrollY);
       if (leaving) pages.set(key.split("#")[0], scrollY);
     };
-    /** Projects opened in the pane over the home page; the pane animates those itself. */
+    // these are animated by the modal
     const panes = new Set<string>();
     const replayed = new WeakSet<Event>();
     let active: ViewTransition | null = null;
-    /** Counts navigations, so one that's overtaken while waiting its turn is dropped. */
+    // drops overtaken navigations
     let latest = 0;
 
     const restoration = () => {
       history.scrollRestoration = phone.matches ? "manual" : "auto";
     };
-    // A reload should still come back to the same spot.
+    // restore position on reload
     const release = () => {
       history.scrollRestoration = "auto";
     };
 
-    /** Captures the screen, lets `update` change the page, then slides between the two. */
     const slide = (from: string, path: string, update: () => void, arrive?: () => void) => {
       const turn = latest;
       const root = document.documentElement;
       root.dataset.nav = depthOf(path) < depthOf(from) ? "pop" : "push";
-      // The home page's bar isn't sticky, so there it moves with its page.
+      // this nav scrolls with its page
       root.dataset.bar = from === "/" || path === "/" ? "slides" : "stays";
       const transition = document.startViewTransition(
         () =>
@@ -99,13 +82,13 @@ export function PageTransitions() {
               clearTimeout(timer);
               resolve();
             };
-            // Registered first: the page may render synchronously.
+            // register first, rendering can be synchronous
             waiting.current = { path, arrive, done };
             update();
           }),
       );
       active = transition;
-      // Skipping (a second tap, a hidden tab) is expected, not an error.
+      // skipping is expected
       transition.ready.catch(() => {});
       transition.finished.finally(() => {
         if (active !== transition) return;
@@ -130,19 +113,19 @@ export function PageTransitions() {
       const samePage = url.pathname === location.pathname;
       remember(shown.current, !samePage);
       if (samePage) {
-        shown.current = keyOf(url); // an in-page jump
+        shown.current = keyOf(url); // in page jump
         return;
       }
       if (still.matches) return;
 
-      e.preventDefault(); // next/link leaves prevented clicks alone
-      // A back link returns you to your place; the bar's links start at the top.
+      e.preventDefault(); // next/link ignores prevented clicks
+      // back links restore scroll
       const back = depthOf(url.pathname) < depthOf(location.pathname);
       const saved = back && link.closest("main") ? pages.get(url.pathname) : 0;
       slide(
         location.pathname,
         url.pathname,
-        // With a #target the router scrolls to it; otherwise we place the page.
+        // the router handles #targets
         () => router.push(url.pathname + url.search + url.hash, { scroll: !!url.hash }),
         url.hash ? undefined : () => scrollTo(0, saved ?? 0),
       );
@@ -157,7 +140,7 @@ export function PageTransitions() {
       latest++;
       shown.current = to;
 
-      // Opening or closing the project pane: the page underneath stays put.
+      // modal open/close, don't move the page
       if ((fromPath === "/" && panes.has(path)) || (path === "/" && panes.has(fromPath))) return;
 
       remember(from, path !== fromPath);
@@ -178,7 +161,7 @@ export function PageTransitions() {
         return;
       }
 
-      e.stopImmediatePropagation(); // the router hears it once the screen is captured
+      e.stopImmediatePropagation(); // replayed once captured
       slide(
         fromPath,
         path,
@@ -195,7 +178,7 @@ export function PageTransitions() {
     phone.addEventListener("change", restoration);
     addEventListener("pagehide", release);
     addEventListener("pageshow", restoration);
-    // Capture on window: ahead of React's click handlers.
+    // capture so this runs before react
     addEventListener("click", onClick, true);
     const stopIntercepting = interceptPopState(onPopState);
     return () => {

@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import s from "./admin.module.css";
 
-/** iOS-style segmented control used as the admin's section switcher. */
 export function AdminTabs({ tabs }: { tabs: { href: string; label: string }[] }) {
   const pathname = usePathname();
   return (

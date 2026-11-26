@@ -8,7 +8,7 @@
   border-bottom: 1px solid transparent;
 }
 
-/* The hairline fades in once content scrolls beneath the bar. */
+/* hairline fades in on scroll */
 @supports (animation-timeline: scroll()) {
   .bar {
     animation: edge linear both;
@@ -23,8 +23,7 @@
   }
 }
 
-/* On the home page on phones (PHONE, lib/pages.ts) the bar scrolls away with
-   the page, and a floating button takes over (home-nav.tsx). */
+/* scrolls away on the home page on phones */
 @media (max-width: 600px), (pointer: coarse) and (max-height: 500px) {
   :global(html[data-home]) .bar {
     position: relative;

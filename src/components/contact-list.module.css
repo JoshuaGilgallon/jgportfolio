@@ -8,7 +8,6 @@
   position: relative;
 }
 
-/* Hairline inset to the label, past the icon tile, as in iOS Settings. */
 .item + .item::before {
   content: "";
   position: absolute;
@@ -63,7 +62,6 @@
 }
 
 .tile {
-  /* Apple's icon grid: corner radius is 22.37% of the tile. */
   --r: calc(30px * 0.2237);
   display: grid;
   place-items: center;

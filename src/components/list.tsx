@@ -2,7 +2,6 @@ import Link from "next/link";
 import { ArrowUpRight } from "./icons";
 import s from "./list.module.css";
 
-/** An inset grouped list: one squircle, rows divided by inset hairlines. */
 export function List({ children }: { children: React.ReactNode }) {
   return <ul className={`${s.list} sq`}>{children}</ul>;
 }

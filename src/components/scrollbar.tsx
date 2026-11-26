@@ -3,14 +3,8 @@
 import { useEffect, useRef } from "react";
 import s from "./scrollbar.module.css";
 
-/**
- * An overlay scroll indicator in the manner of macOS and iOS: a slim pill
- * that floats over the content, appears while scrolling (or when the pointer
- * comes near), fades away when idle and widens to be dragged. The native
- * scrollbar of `target` is hidden in CSS; wheel, touch and keyboard
- * scrolling are untouched. Place it inside a positioned ancestor of target.
- * `flash` is how long (ms) it stays up when it first appears.
- */
+// overlay scrollbar for target, needs a positioned ancestor.
+// flash = how long it shows at first, in ms
 export function Scrollbar({ target, flash = 0 }: { target: React.RefObject<HTMLElement | null>; flash?: number }) {
   const trackRef = useRef<HTMLDivElement>(null);
   const thumbRef = useRef<HTMLDivElement>(null);
@@ -88,8 +82,7 @@ export function Scrollbar({ target, flash = 0 }: { target: React.RefObject<HTMLE
     if (el.firstElementChild) resize.observe(el.firstElementChild);
     layout();
 
-    // Like a fresh iOS scroll view, flash once so it's clear there's more.
-    // It waits one tick, for a parent that reveals the target in its effect.
+    // flash once, a tick later so the target is visible
     const flashTimer = window.setTimeout(() => {
       layout();
       if (flash > 0) show(flash);

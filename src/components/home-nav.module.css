@@ -1,4 +1,4 @@
-/* The home page's floating button and the sheet it becomes (home-nav.tsx). */
+/* floating button and sheet on the home page */
 
 .button,
 .hint,
@@ -7,10 +7,7 @@
   --edge: 20px;
 }
 
-/* ---------- Button ---------- */
-
-/* Blurs in and out on the same critically damped spring as the morph's
-   content (--spring-smooth). */
+/* matches --spring-smooth */
 .button {
   position: fixed;
   right: var(--edge);
@@ -24,7 +21,7 @@
   border: 0;
   border-radius: 50%;
   background: var(--bg);
-  /* The sheet starts from this same shadow, so the hand-over doesn't show. */
+  /* same shadow as the sheet's start */
   box-shadow:
     0 6px 20px rgb(0 0 0 / 0.12),
     0 0 0 0.5px rgb(0 0 0 / 0.1);
@@ -40,7 +37,6 @@
     visibility var(--spring-smooth);
 }
 
-/* Only phones (PHONE, lib/pages.ts) get the button; elsewhere the bar is sticky. */
 @media (max-width: 600px), (pointer: coarse) and (max-height: 500px) {
   .button[data-shown] {
     visibility: visible;
@@ -54,13 +50,11 @@
   transform: scale(0.92);
 }
 
-/* While the sheet is out, the button is the sheet. */
+/* hidden while the sheet is out */
 .button[data-away] {
   visibility: hidden;
   transition: none;
 }
-
-/* ---------- First-time hint ---------- */
 
 .hint {
   position: fixed;
@@ -90,7 +84,6 @@
     visibility var(--spring-smooth);
 }
 
-/* A tail pointing down at the middle of the button. */
 .hint::after {
   content: "";
   position: absolute;
@@ -110,15 +103,10 @@
   }
 }
 
-/* ---------- Sheet ---------- */
-
-/* A clear layer over the screen that sets the sheet along the bottom edge.
-   Safari on iOS 26 and later paints its status bar and toolbar a flat colour
-   when something fixed reaches the top or bottom of the viewport. So this
-   layer stops short of both (--clear), and the veil behind it scrolls with the
-   page instead of being fixed (see Veil, below). */
+/* ios 26 safari tints its bars if something fixed touches the edges,
+   so stop short of both and let the veil scroll with the page */
 .dialog[open] {
-  --clear: 8px; /* CLEAR in home-nav.tsx */
+  --clear: 8px; /* keep in sync with home-nav.tsx */
   position: fixed;
   inset: var(--clear);
   display: flex;
@@ -145,9 +133,8 @@
   width: min(400px, 100%);
   overflow: clip;
   background: var(--bg);
-  /* Cast mostly upwards: Safari cuts fixed content off at the bottom of the
-     viewport, where a shadow falling below the sheet would end in a hard line.
-     Matches SHADOW in lib/liquid-surface.ts. */
+  /* shadow goes upwards since safari clips the bottom.
+     matches liquid-surface.ts */
   box-shadow:
     0 calc(6px - 6px * var(--lift)) 20px rgb(0 0 0 / calc(0.12 - 0.07 * var(--lift))),
     0 -16px 48px -12px rgb(0 0 0 / calc(0.08 * var(--lift))),
@@ -216,9 +203,6 @@
   background: var(--fill-strong);
 }
 
-/* ---------- Morph (home-nav.tsx) ---------- */
-
-/* The surface the button and sheet share while one becomes the other. */
 .surface {
   position: fixed;
   display: none;
@@ -230,13 +214,12 @@
   display: block;
 }
 
-/* With the surface drawn, the sheet only clips its content. */
+/* sheet only clips content here */
 .dialog[data-surface][data-morphing] .panel {
   background: transparent;
   box-shadow: none;
 }
 
-/* The button, shrinking away into the sheet. */
 .ghost {
   position: fixed;
   left: 0;
@@ -251,7 +234,7 @@
   display: block;
 }
 
-/* Without the surface (no WebGL 2), each blob draws itself. */
+/* fallback without webgl2 */
 .dialog[data-morphing]:not([data-surface]) .ghost {
   background: var(--bg);
   box-shadow:
@@ -259,7 +242,6 @@
     0 0 0 0.5px rgb(0 0 0 / 0.1);
 }
 
-/* Its icon. */
 .glyph {
   position: absolute;
   display: grid;
@@ -271,11 +253,7 @@
   will-change: transform, opacity, filter;
 }
 
-/* ---------- Veil ---------- */
-
-/* The same frosted veil as the project pane, a little lighter. Absolute and
-   taller than the page (--page-height, from home-nav.tsx), so it runs on under
-   the status bar and toolbar. --veil follows the morph. */
+/* absolute and taller than the page so it runs under safari's bars */
 .dialog::backdrop {
   position: absolute;
   inset: 0 0 auto;

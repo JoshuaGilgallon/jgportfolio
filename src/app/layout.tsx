@@ -3,9 +3,6 @@ import { Instrument_Sans } from "next/font/google";
 import { site } from "@/lib/site";
 import "./globals.css";
 
-// Instrument Sans: a crisp, slightly condensed grotesque. Self-hosted by
-// next/font (no third-party request), preloaded, and size-matched to the
-// fallback so nothing shifts while it loads.
 const instrument = Instrument_Sans({
   subsets: ["latin"],
   axes: ["wdth"],
@@ -30,7 +27,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    // The home page adds data-home before hydration (components/home-nav.tsx).
+    // data-home gets set before hydration
     <html lang="en-GB" className={instrument.variable} suppressHydrationWarning>
       <body>{children}</body>
     </html>

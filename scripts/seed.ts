@@ -1,11 +1,4 @@
-/**
- * DEMO CONTENT ONLY. Fills an empty database with sample entries so the
- * design can be previewed. None of it is real: replace or delete every
- * entry from /admin before going live.
- *
- * Usage: npm run db:seed            (only runs on an empty database)
- *        npm run db:seed -- --reset (wipes all content first)
- */
+// demo data for an empty database. --reset wipes everything first
 import { createClient } from "@libsql/client";
 import { drizzle } from "drizzle-orm/libsql";
 import * as schema from "../src/lib/db/schema";

@@ -16,8 +16,7 @@ export default function SiteLayout({ children, modal }: LayoutProps<"/">) {
       </main>
       <Footer />
       {modal}
-      {/* After the page, so their effects see it rendered. Both read the path,
-          which isn't known while a new slug's shell is prerendered. */}
+      {/* after the page so its effects run first */}
       <Suspense>
         <PageTransitions />
         <Preloader />

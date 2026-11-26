@@ -1,5 +1,4 @@
-/* The hover zone along the right edge. It starts below the close button and
-   stops short of the bottom corner, so the pill never meets a curve. */
+/* hover zone, avoids the close button and corner */
 .track {
   position: absolute;
   top: var(--scrollbar-top, 60px);
@@ -33,7 +32,7 @@
     background-color var(--spring-smooth);
 }
 
-/* With a mouse it's a control: it shows when you come near and widens to be grabbed. */
+/* grows on hover with a mouse */
 @media (hover: hover) and (pointer: fine) {
   .track:hover {
     opacity: 1;
@@ -47,7 +46,7 @@
   }
 }
 
-/* On touch it's only an indicator, like iOS: slimmer, and never in the way of a swipe. */
+/* indicator only on touch */
 @media (pointer: coarse) {
   .track {
     pointer-events: none;

@@ -1,9 +1,4 @@
-/**
- * Prints the CSS easing tokens in globals.css: Apple springs sampled into
- * `linear()` curves with the same integrator the morph uses (src/lib/spring.ts).
- *
- *   npx tsx scripts/springs.ts
- */
+// prints the spring easings for globals.css: npx tsx scripts/springs.ts
 import { Spring, type SpringSpec } from "../src/lib/spring";
 
 function sample(spec: SpringSpec) {
@@ -11,7 +6,6 @@ function sample(spec: SpringSpec) {
   const dt = 1 / 240;
   const points: [number, number][] = [[0, 0]];
   let t = 0;
-  // Run until the motion is below a thousandth of the distance travelled.
   while (!(Math.abs(s.x - 1) < 1e-3 && Math.abs(s.v) < 1e-2) && t < 3) {
     s.step(dt, spec);
     t += dt;
@@ -21,7 +15,7 @@ function sample(spec: SpringSpec) {
   return { duration: t, points };
 }
 
-// Ramer–Douglas–Peucker: keep only the points that bend the curve.
+// ramer-douglas-peucker
 function simplify(points: [number, number][], tolerance: number): [number, number][] {
   if (points.length < 3) return points;
   const [x0, y0] = points[0];
@@ -51,8 +45,8 @@ function token(name: string, spec: SpringSpec, note: string) {
 
 console.log(
   [
-    token("spring-smooth", { damping: 1, response: 0.3 }, "AnimationKit blurIn, critically damped"),
-    token("spring", { damping: 0.8, response: 0.3 }, "AnimationKit liquidMorph"),
-    token("spring-nav", { damping: 1, response: 0.3 }, "UIKit fluid navigation push and pop"),
+    token("spring-smooth", { damping: 1, response: 0.3 }, "smooth"),
+    token("spring", { damping: 0.8, response: 0.3 }, "default"),
+    token("spring-nav", { damping: 1, response: 0.3 }, "nav"),
   ].join("\n"),
 );

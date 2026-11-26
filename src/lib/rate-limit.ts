@@ -1,10 +1,6 @@
 import "server-only";
 
-/**
- * Fixed-window limiter for sign-in attempts, kept in memory.
- * Good enough for a single-instance deployment; swap for Redis/Upstash
- * if the site ever runs on several instances.
- */
+// in memory, only works for a single instance
 const WINDOW_MS = 15 * 60 * 1000;
 const PER_IP = 5;
 const GLOBAL = 30;
@@ -22,7 +18,7 @@ function hit(key: string, limit: number, now: number) {
   return bucket.count <= limit;
 }
 
-/** Returns false once the caller (or everyone combined) has made too many attempts. */
+// false once over the ip or global limit
 export function allowSignInAttempt(ip: string) {
   const now = Date.now();
   if (buckets.size > 10_000) {

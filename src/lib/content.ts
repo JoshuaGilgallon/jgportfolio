@@ -3,12 +3,7 @@ import { and, asc, desc, eq } from "drizzle-orm";
 import { cacheLife, cacheTag } from "next/cache";
 import { db, schema } from "@/lib/db";
 
-/**
- * Public, read-only content. Every read is cached and tagged; admin Server
- * Actions call `updateTag(<tag>)` after each change, so edits appear at once
- * while pages stay static. The "content" profile (next.config.ts) also
- * refreshes in the background every 10 minutes as a safety net.
- */
+// cached public reads, admin edits invalidate by tag
 
 export const tags = {
   posts: "posts",

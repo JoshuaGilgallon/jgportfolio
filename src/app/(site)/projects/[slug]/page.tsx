@@ -5,8 +5,7 @@ import { TextLink } from "@/components/text-link";
 import { getProject, getProjects } from "@/lib/content";
 import a from "../../article.module.css";
 
-// Opened from the home page, a project shows in a modal (see @modal). This
-// page is what a direct visit, a refresh or a shared link gets.
+// full page version, for direct visits and refreshes
 
 const PLACEHOLDER = "__none__";
 

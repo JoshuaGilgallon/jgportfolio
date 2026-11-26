@@ -6,7 +6,7 @@ import { contentTypes, isContentType } from "@/lib/admin/config";
 import { defaultValues } from "@/lib/admin/store";
 import { requireAdmin } from "@/lib/session";
 
-// Private and per-request: blocking on the session and database is intended.
+// fine to block, it's private
 export const instant = false;
 
 export async function generateMetadata({ params }: PageProps<"/admin/[type]/new">): Promise<Metadata> {

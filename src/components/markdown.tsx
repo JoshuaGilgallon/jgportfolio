@@ -4,14 +4,9 @@ import { MarkdownAsync } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import s from "./prose.module.css";
 
-/**
- * Renders trusted-author Markdown on the server. Raw HTML is never enabled
- * (react-markdown escapes it), and code is highlighted at build time, so the
- * page ships no client JavaScript for it.
- */
+// raw html stays disabled
 export async function Markdown({ children }: { children: string }) {
-  // Cached by content: highlighting runs once per distinct body, and the
-  // highlighter's internal timing calls stay out of prerendering.
+  // cached so highlighting only runs once per body
   "use cache";
   cacheLife("content");
   return (
@@ -31,7 +26,7 @@ export async function Markdown({ children }: { children: string }) {
         ]}
         components={{
           img: ({ src, alt = "", node, ...props }) => (
-            // Authors link images by URL; dimensions are unknown, so a plain lazy <img>.
+            // unknown dimensions, so plain img
             // eslint-disable-next-line @next/next/no-img-element
             <img src={typeof src === "string" ? src : undefined} alt={alt} loading="lazy" decoding="async" className="sq" {...props} />
           ),

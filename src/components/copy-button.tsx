@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import { HapticTap } from "./haptic-tap";
 import { Check, Copy } from "./icons";
 
-/** A row-sized button that copies `value` and briefly confirms it. */
 export function CopyButton({
   value,
   className,
@@ -30,7 +29,7 @@ export function CopyButton({
       clearTimeout(timer.current);
       timer.current = setTimeout(() => setCopied(false), 1600);
     } catch {
-      // Clipboard unavailable (insecure context or denied): leave the value visible to select.
+      // no clipboard access, the text can still be selected
     }
   }
 

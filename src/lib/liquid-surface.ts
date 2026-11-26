@@ -1,50 +1,34 @@
-/**
- * Draws the surface of a liquid morph (src/lib/liquid-morph.ts): the union of
- * its blobs, filled with one colour, with the site's sheet shadow under it.
- *
- * While the blobs are fusing, their union's distance field is
- * gaussian-blurred, as CoreAnimation's CASDFLayer does and as the research
- * library reproduces it (liquid_glass/include/liquid_glass/glass.hpp,
- * `prepareGroup`): the field is sampled on a 2 px grid, blurred in two
- * separable passes, and its zero contour drawn at full resolution. Once the
- * blur is off, the union is evaluated exactly per pixel.
- *
- * WebGL 2. Each pass is a single triangle. The two grid passes (only while
- * the blur is on) are a few hundred texels across, and the full-resolution
- * pass is scissored to the blobs and their shadow.
- */
+// webgl2 renderer for the morph blobs. while merging, the distance field is
+// blurred on a coarse grid, otherwise it's exact per pixel
 
 import { parseComputedColor } from "./color";
 
-/** A rounded rectangle with superellipse corners, in CSS px. */
+// rounded rect with superellipse corners, css px
 export type Blob = {
   cx: number;
   cy: number;
   w: number;
   h: number;
-  /** Corner radius. */
   r: number;
-  /** CSS `corner-shape: superellipse(k)`: 1 is round. */
+  // superellipse k, 1 is round
   k: number;
 };
 
-/** Distances are stored in two 8-bit channels over ±RANGE px. */
+// distance range for 8 bit packing
 const RANGE = 256;
-/** Grid cell, CSS px (as in the library). */
 const STEP = 2;
 const MAX_TAPS = 64;
 
-// The sheet's shadows (home-nav.module.css .panel): y offset, blur radius, spread, alpha.
-// The first goes from the button's (y1, a1) to the sheet's (centred, a1Sheet); the second grows in with the sheet.
+// sheet shadows, matches home-nav.module.css
 const SHADOW = { y1: 6, blur1: 20, a1: 0.12, a1Sheet: 0.05, y2: -16, blur2: 48, spread2: -12, a2: 0.08, ring: 0.5, ringA: 0.1 };
-// How far the shadows reach past the shape, for the scissor box.
+// shadow reach, for the scissor box
 const REACH = { top: 70, side: 92, bottom: 116 };
 
 const common = /* glsl */ `#version 300 es
 precision highp float;
 precision highp int;
-uniform vec4 uS[2];   // centre, half size (CSS px, viewport)
-uniform vec2 uC[2];   // corner radius, superellipse exponent
+uniform vec4 uS[2];   // centre, half size
+uniform vec2 uC[2];   // radius, exponent
 uniform int uN;
 
 float sdBlob(vec2 p, vec4 s, vec2 c) {
@@ -74,7 +58,7 @@ void main() {
   gl_Position = vec4(p, 0.0, 1.0);
 }`;
 
-// Grid pass 1: the union's field, blurred along x (evaluated exactly at every tap).
+// pass 1: blur x
 const blurX =
   common +
   /* glsl */ `
@@ -93,7 +77,7 @@ void main() {
   o = pack(sum / wsum);
 }`;
 
-// Grid pass 2: blurred along y.
+// pass 2: blur y
 const blurY =
   common +
   /* glsl */ `
@@ -113,14 +97,14 @@ void main() {
   o = pack(sum / wsum);
 }`;
 
-// The surface, per device pixel.
+// final pass
 const surface =
   common +
   /* glsl */ `
 uniform sampler2D uTex;
 uniform bool uBlurred;
 uniform vec2 uOrigin;
-uniform float uHeight;  // canvas height, device px
+uniform float uHeight;
 uniform float uDpr;
 uniform vec3 uColor;
 uniform float uLift;
@@ -135,9 +119,9 @@ float field(vec2 p) {
   ivec2 i = ivec2(floor(cg));
   vec2 t = cg - vec2(i);
   float v = mix(mix(grid(i, n), grid(i + ivec2(1, 0), n), t.x), mix(grid(i + ivec2(0, 1), n), grid(i + ivec2(1, 1), n), t.x), t.y);
-  return v + length(g - cg) * ${STEP}.0;  // outside the grid, add the distance to it
+  return v + length(g - cg) * ${STEP}.0;  // add distance when outside the grid
 }
-// A box shadow's edge: the gaussian CDF (logistic approximation), sigma = blur / 2.
+// gaussian cdf approximation
 float shadow(float d, float blur) { return 1.0 / (1.0 + exp(3.404 * d / blur)); }
 
 void main() {
@@ -171,7 +155,7 @@ export class LiquidSurface {
   private corners = new Float32Array(4);
   lost = false;
 
-  /** Null where WebGL 2 isn't available. */
+  // null without webgl2
   static create(canvas: HTMLCanvasElement) {
     const gl = canvas.getContext("webgl2", { alpha: true, premultipliedAlpha: true, antialias: false, depth: false, stencil: false });
     if (!gl) return null;
@@ -229,7 +213,6 @@ export class LiquidSurface {
     };
   }
 
-  /** Places the canvas over a box of the viewport (CSS px) and sets the fill colour (a computed CSS colour). */
   layout(x: number, y: number, w: number, h: number, color: string) {
     const { gl, canvas } = this;
     this.dpr = Math.min(devicePixelRatio || 1, 3);
@@ -260,10 +243,7 @@ export class LiquidSurface {
     this.color = parseColor(color);
   }
 
-  /**
-   * Draws the blobs' union. `sigma` (px) blurs their distance field; `lift`
-   * (0..1) fades in the sheet's deep shadow.
-   */
+  // sigma blurs the field, lift fades in the deep shadow
   draw(blobs: Blob[], sigma: number, lift: number) {
     const { gl } = this;
     if (this.lost) return;
@@ -318,7 +298,7 @@ export class LiquidSurface {
     gl.clearColor(0, 0, 0, 0);
     gl.clear(gl.COLOR_BUFFER_BIT);
 
-    // Only the blobs and their shadow.
+    // scissor to blobs and shadow
     const d = this.dpr;
     const sx = Math.max(0, Math.floor((x0 - REACH.side - this.x) * d));
     const sy = Math.max(0, Math.floor((y0 - REACH.top - this.y) * d));
@@ -350,7 +330,7 @@ export class LiquidSurface {
   }
 }
 
-/** A computed CSS colour → sRGB 0..1; white (the sheet's colour) if it can't be read. */
+// white if unreadable
 function parseColor(css: string): number[] {
   return (parseComputedColor(css) ?? [255, 255, 255]).map((c) => c / 255);
 }

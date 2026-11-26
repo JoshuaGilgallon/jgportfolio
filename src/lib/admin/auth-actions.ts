@@ -18,14 +18,14 @@ export async function login(_prev: LoginState, formData: FormData): Promise<Logi
     if (error instanceof AuthError) {
       const code = "code" in error ? (error as { code?: string }).code : undefined;
       return {
-        username, // React resets the form after an action; keep what was typed.
+        username, // react resets the form, keep the username
         error:
           code === "rate_limited"
             ? "Too many attempts. Try again in 15 minutes."
             : "That username and password don’t match.",
       };
     }
-    throw error; // Let Next.js handle the success redirect.
+    throw error; // let next handle the redirect
   }
 }
 

@@ -65,7 +65,7 @@
   }
 }
 
-/* Touch has no hover, so a press shows the same highlight. */
+/* pressed state for touch */
 .button:active {
   background: var(--fill-hover);
 }
@@ -96,12 +96,12 @@
   border-top: 1px solid var(--separator);
 }
 
-/* Holds the page's height while a not-yet-cached entry streams in. */
+/* holds height while streaming in */
 .pending {
   min-height: 60vh;
 }
 
-/* Title at the very top of a container (the project modal). */
+/* title at the top of the modal */
 .flush {
   margin-top: 0;
 }

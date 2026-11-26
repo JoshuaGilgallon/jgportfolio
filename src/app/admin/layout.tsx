@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-// Admin pages read the session on every request, so they never prerender.
+// reads the session, so never prerendered
 export const instant = false;
 
 export default function AdminRootLayout({ children }: { children: React.ReactNode }) {

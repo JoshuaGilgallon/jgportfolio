@@ -33,7 +33,7 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* Phones stack the cards, so they don't need to hold a tile's height. */
+/* no fixed height when stacked */
 @media (max-width: 520px) {
   .card {
     min-height: 0;
@@ -60,7 +60,6 @@
   color: var(--label-2);
 }
 
-/* Stack on the left, the "+" on the right, both pinned to the bottom. */
 .foot {
   display: flex;
   align-items: center;

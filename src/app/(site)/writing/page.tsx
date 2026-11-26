@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 export default async function WritingPage() {
   const posts = await getPosts();
 
-  // Grouped by year, newest first, like a photo library.
+  // grouped by year, newest first
   const years = new Map<number, typeof posts>();
   for (const post of posts) {
     const year = post.date.getUTCFullYear();

@@ -1,9 +1,9 @@
-/** What the phone-only page slides and preloading know about the site's pages. */
+// page info for slides and preloading
 
-/** The same screens that get the full-screen project pane (modal.module.css). */
+// matches the full screen modal query
 export const PHONE = "(max-width: 600px), (pointer: coarse) and (max-height: 500px)";
 
-/** The URL a link would open, if it's a page of this site (not a file, /admin or elsewhere). */
+// null if it isn't a page on this site
 export function pageUrl(link: HTMLAnchorElement): URL | null {
   if (link.target && link.target !== "_self") return null;
   if (link.hasAttribute("download")) return null;
@@ -12,8 +12,8 @@ export function pageUrl(link: HTMLAnchorElement): URL | null {
   return /^\/(?:(?:writing(?:\/[^/.]+)?|projects\/[^/.]+)\/?)?$/.test(url.pathname) ? url : null;
 }
 
-/** How far into the site a page is: home, then lists, then single entries. */
+// home, lists, entries
 export const depthOf = (path: string) => path.split("/").filter(Boolean).length;
 
-/** Where a page's back link leads. */
+// back link target
 export const parentOf = (path: string) => (path.startsWith("/writing/") ? "/writing" : "/");
