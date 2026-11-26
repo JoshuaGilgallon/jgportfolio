@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { AdminTabs } from "@/components/admin/tabs";
+import { HapticTap } from "@/components/haptic-tap";
 import { ArrowUpRight } from "@/components/icons";
 import { logout } from "@/lib/admin/auth-actions";
 import { contentTypeKeys, contentTypes } from "@/lib/admin/config";
@@ -20,6 +21,7 @@ export default function PanelLayout({ children }: { children: React.ReactNode })
             <form action={logout}>
               <button type="submit" className={s.barLink}>
                 Sign out
+                <HapticTap />
               </button>
             </form>
           </div>

@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { startTransition, useActionState, useEffect, useState } from "react";
 import { contentTypes, type ContentType, type EntryValues, type Field, type SaveState } from "@/lib/admin/config";
+import { HapticTap } from "@/components/haptic-tap";
 import { ArrowUpRight, ChevronLeft } from "@/components/icons";
 import s from "./admin.module.css";
 
@@ -102,6 +103,7 @@ export function EntryForm({ type, values, action, onDelete, publicHref }: Props)
               </span>
               <button type="submit" className={s.primary} disabled={pending}>
                 {pending ? "Saving…" : isNew ? "Create" : "Save"}
+                <HapticTap />
               </button>
             </div>
           </div>
@@ -208,6 +210,7 @@ function MarkdownField({ defaultValue, ...props }: React.ComponentProps<"textare
             onClick={() => setMode(m)}
           >
             {m === "write" ? "Write" : "Preview"}
+            <HapticTap />
           </button>
         ))}
       </div>
@@ -251,6 +254,7 @@ function DeleteButton({ onDelete, label }: { onDelete: () => Promise<void>; labe
       }}
     >
       {pending ? "Deleting…" : armed ? "Tap again to delete" : label}
+      <HapticTap />
     </button>
   );
 }

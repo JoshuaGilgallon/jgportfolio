@@ -186,6 +186,31 @@ button {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* The iPhone haptic overlay (components/haptic-tap.tsx). :where() so a
+   button that positions itself still wins. */
+:where(button:has(> .haptic-tap)) {
+  position: relative;
+}
+
+.haptic-tap {
+  position: absolute;
+  inset: 0;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.haptic-tap input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  visibility: hidden;
+}
+
+button:disabled > .haptic-tap {
+  display: none;
+}
+
 ::selection {
   background: rgb(0 113 227 / 0.2);
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { HapticTap } from "@/components/haptic-tap";
 import { login, type LoginState } from "@/lib/admin/auth-actions";
 import s from "./login.module.css";
 
@@ -44,6 +45,7 @@ export function LoginForm() {
       </p>
       <button type="submit" className={s.submit} disabled={pending}>
         {pending ? "Signing in…" : "Continue"}
+        <HapticTap />
       </button>
     </form>
   );

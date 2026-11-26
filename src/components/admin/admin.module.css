@@ -59,6 +59,11 @@
   }
 }
 
+.barLink:active {
+  color: var(--label);
+  background: var(--fill-strong);
+}
+
 .barLink svg {
   width: 14px;
   height: 14px;
@@ -110,6 +115,10 @@
     box-shadow var(--spring-smooth);
 }
 
+.segment:active {
+  background-color: var(--fill-strong);
+}
+
 .tabActive,
 .segmentActive {
   background: var(--bg);
@@ -159,6 +168,10 @@
   .primary:hover {
     background: color-mix(in srgb, var(--accent-fill) 88%, #000);
   }
+}
+
+.primary:active {
+  background: color-mix(in srgb, var(--accent-fill) 76%, #000);
 }
 
 .primary:disabled {
@@ -272,6 +285,11 @@
     background: var(--fill-strong);
     color: var(--label);
   }
+}
+
+.moveButton:active:not(:disabled) {
+  background: var(--fill-strong);
+  color: var(--label);
 }
 
 .moveButton:disabled {
@@ -590,6 +608,10 @@
   .danger:hover {
     background: color-mix(in srgb, var(--danger) 12%, transparent);
   }
+}
+
+.danger:active {
+  background: color-mix(in srgb, var(--danger) 20%, transparent);
 }
 
 /* "Saved" fades away on its own; no timers needed. */

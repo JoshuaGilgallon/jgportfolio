@@ -50,6 +50,10 @@
   }
 }
 
+.button[data-shown]:active {
+  transform: scale(0.92);
+}
+
 /* While the sheet is out, the button is the sheet. */
 .button[data-away] {
   visibility: hidden;

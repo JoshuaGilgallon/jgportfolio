@@ -4,6 +4,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { LiquidMorph } from "@/lib/liquid-morph";
 import { LiquidSurface } from "@/lib/liquid-surface";
 import { frameOf, type Frame } from "@/lib/morph";
+import { HapticTap } from "./haptic-tap";
 import { ChevronRight } from "./icons";
 import s from "./home-nav.module.css";
 
@@ -291,6 +292,7 @@ export function HomeNav({ sections }: { sections: { id: string; label: string }[
         aria-haspopup="dialog"
       >
         <MenuGlyph />
+        <HapticTap />
       </button>
       <dialog
         ref={dialogRef}
@@ -326,6 +328,7 @@ export function HomeNav({ sections }: { sections: { id: string; label: string }[
             </nav>
             <button type="button" className={`${s.done} sq`} onClick={() => sheet.current?.close()}>
               Close
+              <HapticTap />
             </button>
           </div>
         </div>

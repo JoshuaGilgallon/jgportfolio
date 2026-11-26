@@ -11,12 +11,16 @@ RUN npm ci
 FROM base AS build
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-RUN node_modules/.bin/next build --experimental-build-mode compile
+RUN node_modules/.bin/next build --experimental-build-mode compile \
+  && rm -rf .next/cache \
+  && mv .next .next-compiled
 
 FROM base AS run
 ENV NODE_ENV=production
 # The full node_modules is kept: startup needs tsx to run migrations.
 COPY --from=build --chown=node:node /app ./
+# Startup recreates .next here.
+RUN chown node:node /app
 USER node
 EXPOSE 3000
 CMD ["sh", "scripts/docker-start.sh"]

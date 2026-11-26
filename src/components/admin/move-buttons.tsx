@@ -1,3 +1,4 @@
+import { HapticTap } from "@/components/haptic-tap";
 import { moveEntry } from "@/lib/admin/actions";
 import type { ContentType } from "@/lib/admin/config";
 import s from "./admin.module.css";
@@ -16,11 +17,13 @@ export function MoveButtons({ type, id, first, last }: { type: ContentType; id: 
       <form action={moveEntry.bind(null, type, id, "up")}>
         <button type="submit" className={s.moveButton} disabled={first} aria-label="Move up">
           <Arrow up />
+          <HapticTap />
         </button>
       </form>
       <form action={moveEntry.bind(null, type, id, "down")}>
         <button type="submit" className={s.moveButton} disabled={last} aria-label="Move down">
           <Arrow />
+          <HapticTap />
         </button>
       </form>
     </div>

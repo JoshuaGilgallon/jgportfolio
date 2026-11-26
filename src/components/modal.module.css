@@ -149,6 +149,16 @@
   }
 }
 
+.close:active {
+  background: rgb(210 210 216 / 0.95);
+  color: var(--label);
+}
+
+/* The haptic overlay covers the whole 44 px too. */
+.close > label {
+  inset: -4px;
+}
+
 .close svg {
   width: 20px;
   height: 20px;

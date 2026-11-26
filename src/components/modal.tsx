@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { frameOf, MorphAnimation, type Frame } from "@/lib/morph";
 import { morph as morphSettings, Spring } from "@/lib/spring";
+import { HapticTap } from "./haptic-tap";
 import s from "./modal.module.css";
 import { Scrollbar } from "./scrollbar";
 
@@ -432,6 +433,7 @@ export function Modal({ children, labelledBy }: { children: React.ReactNode; lab
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" aria-hidden>
             <path d="M7.5 7.5l9 9M16.5 7.5l-9 9" />
           </svg>
+          <HapticTap />
         </button>
       </div>
     </dialog>

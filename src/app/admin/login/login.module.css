@@ -107,6 +107,10 @@
   }
 }
 
+.submit:active {
+  background: color-mix(in srgb, var(--accent-fill) 76%, #000);
+}
+
 .submit:disabled {
   opacity: 0.6;
   cursor: default;
