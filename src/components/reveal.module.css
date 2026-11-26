@@ -1,0 +1,88 @@
+/* text blurring into focus word by word, see reveal.tsx.
+   each channel has its own spring: opacity lands first so the word
+   arrives soft, the blur keeps resolving after it's there.
+   keyframes are bare `from` with backwards fill, so nothing is left
+   on the words once they finish */
+
+.word {
+  /* transforms need a box */
+  display: inline-block;
+  /* in em so the pull scales with the type */
+  --blur: 0.25em;
+  --rise: 0.2em;
+  --focus: var(--spring-focus);
+}
+
+/* once per page load, not on every return to the page */
+:global(html:not([data-revealed])) .word {
+  animation:
+    reveal-fade var(--spring-smooth) backwards,
+    reveal-focus var(--focus) backwards,
+    reveal-rise var(--focus) backwards;
+  animation-delay: var(--d), var(--d), var(--d);
+}
+
+/* bigger type travels less relative to its size */
+.word[data-reveal="title"] {
+  --blur: 0.2em;
+  --rise: 0.14em;
+}
+
+.word[data-reveal="lead"] {
+  --blur: 0.3em;
+  --rise: 0.24em;
+}
+
+.word[data-reveal="body"] {
+  --blur: 0.22em;
+  --rise: 0.18em;
+}
+
+/* key words come from a little further out of focus and settle slower */
+.word[data-key] {
+  --boost: 1.35;
+  --focus: var(--spring-focus-slow);
+}
+
+/* on grey text they also ink in once they're readable,
+   so the emphasis arrives as its own quiet beat */
+:global(html:not([data-revealed])) .word[data-key]:is([data-reveal="lead"], [data-reveal="body"]) {
+  animation:
+    reveal-fade var(--spring-smooth) backwards,
+    reveal-focus var(--focus) backwards,
+    reveal-rise var(--focus) backwards,
+    reveal-ink var(--spring-ink) backwards;
+  animation-delay: var(--d), var(--d), var(--d), calc(var(--d) + 220ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :global(html:not([data-revealed])) .word,
+  :global(html:not([data-revealed])) .word[data-key]:is([data-reveal="lead"], [data-reveal="body"]) {
+    animation: reveal-fade 400ms ease-out backwards;
+    animation-delay: 0ms;
+  }
+}
+
+@keyframes reveal-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes reveal-focus {
+  from {
+    filter: blur(calc(var(--blur) * var(--boost, 1)));
+  }
+}
+
+@keyframes reveal-rise {
+  from {
+    transform: translateY(var(--rise));
+  }
+}
+
+@keyframes reveal-ink {
+  from {
+    color: var(--label-2);
+  }
+}

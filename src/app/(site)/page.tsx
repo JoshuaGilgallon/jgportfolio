@@ -2,6 +2,8 @@ import { ContactList } from "@/components/contact-list";
 import { HomeMark, HomeNav } from "@/components/home-nav";
 import { List, Row } from "@/components/list";
 import { ProjectCard, ProjectGrid } from "@/components/project-card";
+import { Key, Reveal } from "@/components/reveal";
+import { RevealOnce } from "@/components/reveal-once";
 import { Section } from "@/components/section";
 import { TextLink } from "@/components/text-link";
 import { getLinks, getPosts, getProjects, getPublications } from "@/lib/content";
@@ -23,18 +25,27 @@ export default async function Home() {
     <>
       <HomeMark />
       <header className={s.hero}>
-        <h1 className={s.title}>Hi, I’m Josh.</h1>
+        <h1 className={s.title}>
+          <Reveal tier="title" at={120} step={80}>
+            Hi, I’m <Key>Josh.</Key>
+          </Reveal>
+        </h1>
         <p className={s.lead}>
-          I work on <em>cloud architecture</em> and <em>low‑level systems</em>.
+          <Reveal tier="lead" at={340} step={36}>
+            I work on <em>cloud architecture</em> and <em>low‑level systems</em>.
+          </Reveal>
         </p>
         <div className={s.about}>
-          <p>
-            Here's a spot for some text that i need to add but i am very lazy
-          </p>
-          <p>
-            And another paragraph here for retention
-          </p>
+          <Reveal tier="body" at={540} step={12}>
+            <p>
+              Here’s a spot for some text that i need to add but i am very lazy
+            </p>
+            <p>
+              And another paragraph here for retention
+            </p>
+          </Reveal>
         </div>
+        <RevealOnce />
       </header>
 
       {projects.length > 0 && (

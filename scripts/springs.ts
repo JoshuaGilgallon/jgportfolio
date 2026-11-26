@@ -48,5 +48,8 @@ console.log(
     token("spring-smooth", { damping: 1, response: 0.3 }, "smooth"),
     token("spring", { damping: 0.8, response: 0.3 }, "default"),
     token("spring-nav", { damping: 1, response: 0.3 }, "nav"),
+    token("spring-focus", { damping: 1, response: 0.5 }, "focus, text coming into focus"),
+    token("spring-focus-slow", { damping: 1, response: 0.62 }, "focus slow, key words"),
+    token("spring-ink", { damping: 1, response: 0.9 }, "ink, colour settling"),
   ].join("\n"),
 );
