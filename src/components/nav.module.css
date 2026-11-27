@@ -1,33 +1,16 @@
+/* no background of its own, the scroll edge blurs the page into it */
 .bar {
+  /* runs a little past the bar, matches scroll-padding-top so jumps land clear of it */
+  --edge-h: calc(var(--nav-h) + 24px);
   position: sticky;
   top: 0;
   z-index: 10;
-  background: var(--nav-bg);
-  -webkit-backdrop-filter: saturate(180%) blur(20px);
-  backdrop-filter: saturate(180%) blur(20px);
-  border-bottom: 1px solid transparent;
-}
-
-/* hairline fades in on scroll */
-@supports (animation-timeline: scroll()) {
-  .bar {
-    animation: edge linear both;
-    animation-timeline: scroll();
-    animation-range: 0 32px;
-  }
-}
-
-@keyframes edge {
-  to {
-    border-bottom-color: var(--separator);
-  }
 }
 
 /* scrolls away on the home page on phones */
 @media (max-width: 600px), (pointer: coarse) and (max-height: 500px) {
   :global(html[data-home]) .bar {
     position: relative;
-    animation: none;
   }
 }
 

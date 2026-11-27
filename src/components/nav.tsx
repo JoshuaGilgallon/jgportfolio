@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getLinks, getPosts, getProjects } from "@/lib/content";
 import { homeSections } from "@/lib/sections";
 import s from "./nav.module.css";
+import { ScrollEdge } from "./scroll-edge";
 
 export async function Nav() {
   const [projects, posts, links] = await Promise.all([getProjects(), getPosts(), getLinks()]);
@@ -9,6 +10,7 @@ export async function Nav() {
 
   return (
     <header className={s.bar} data-site-nav>
+      <ScrollEdge />
       <div className={`page ${s.inner}`}>
         <Link href="/" className={s.name}>
           Josh

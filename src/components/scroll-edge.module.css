@@ -1,0 +1,52 @@
+/* soft scroll edge like ios: content is progressively blurred and faded towards the top.
+   d is 0 at the top of the band and 1 at its end, strength is 1 - smoothstep(d) */
+.edge {
+  position: absolute;
+  inset: 0 0 auto;
+  height: var(--edge-h);
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* css can't vary a blur's radius, so three are stacked and masked to take over in turn.
+   box radii 3, 6, 12 are sigmas 2, 3.74, 7.21, and each layer blurs the ones under it,
+   so it only adds the difference. all 1.6x here, as bare text sits on top rather than glass.
+   no opacity or filter on .edge, that would hide the page from the blurs */
+.edge > * {
+  position: absolute;
+  inset: 0;
+  -webkit-backdrop-filter: blur(var(--blur));
+  backdrop-filter: blur(var(--blur));
+  -webkit-mask-image: var(--mask);
+  mask-image: var(--mask);
+}
+
+.edge > :nth-child(1) {
+  --blur: 3.2px;
+  --mask: linear-gradient(#000 61.3%, rgb(0 0 0 / 0.65) 70%, rgb(0 0 0 / 0.31) 80%, rgb(0 0 0 / 0.08) 90%, transparent);
+}
+
+.edge > :nth-child(2) {
+  --blur: 5px;
+  --mask: linear-gradient(#000 38.7%, rgb(0 0 0 / 0.72) 45%, rgb(0 0 0 / 0.5) 50%, rgb(0 0 0 / 0.28) 55%, transparent 61.3%);
+}
+
+.edge > :nth-child(3) {
+  --blur: 10px;
+  --mask: linear-gradient(#000, rgb(0 0 0 / 0.92) 10%, rgb(0 0 0 / 0.69) 20%, rgb(0 0 0 / 0.35) 30%, transparent 38.7%);
+}
+
+/* the fade into the page colour. far stronger than the original 28% so the links stay
+   legible over headings */
+.edge::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    color-mix(in srgb, var(--bg) 92%, transparent),
+    color-mix(in srgb, var(--bg) 85%, transparent) 30%,
+    color-mix(in srgb, var(--bg) 68%, transparent) 55%,
+    color-mix(in srgb, var(--bg) 32%, transparent) 78%,
+    transparent
+  );
+}

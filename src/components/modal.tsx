@@ -16,8 +16,8 @@ const PIVOT = false;
 const MAX_BLUR = 16;
 // side pane's space above the footer, matches the gap under it
 const FOOTER_GAP = 16;
-// how far the side pane can rise before its close button meets the nav
-const CLOSE_SLACK = 24;
+// how far the side pane can rise before its close button meets the nav's blur
+const CLOSE_SLACK = 4;
 // pull distance in px to dismiss
 const DISMISS_DISTANCE = 140;
 const DISMISS_SPEED = 700;
