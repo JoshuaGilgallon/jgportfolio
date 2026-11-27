@@ -23,9 +23,6 @@ type Layer = { el: HTMLElement; p: Spring };
 type Spot = { left: number; top: number; row: number; index: number };
 type Before = { grid: HTMLElement; cards: Map<HTMLElement, Spot>; height: number };
 
-// the column, live so pages mounting mid shift are picked up
-let pages: HTMLCollectionOf<HTMLElement> | null = null;
-
 const cardsOf = (grid: HTMLElement) =>
   [...grid.children].filter(
     (el): el is HTMLElement => el instanceof HTMLElement && el.hasAttribute("data-morph-source"),
@@ -93,7 +90,8 @@ class Stage {
 
   // sinks a copy of a pane that's been replaced or left behind
   recede(el: HTMLElement) {
-    el.style.zIndex = "29";
+    // under the live pane
+    el.style.zIndex = "8";
     this.layers.push({ el, p: new Spring(0, 0, 1) });
     this.run();
   }
@@ -289,16 +287,16 @@ class Stage {
 
   private render() {
     const root = document.documentElement;
-    // straight onto each .page, a property on the root would restyle the whole document every frame
-    pages ??= document.getElementsByClassName("page") as HTMLCollectionOf<HTMLElement>;
+    // only the content column moves, nav and footer stay centred.
+    // straight onto it, a property on the root would restyle the whole document every frame
+    const column = document.getElementById("main");
     if (this.shift.settled(0.05) && this.shift.target === 0) {
       this.shift.snap(0);
       if ("shift" in root.dataset) delete root.dataset.shift;
-      for (const el of pages) if (el.style.translate) el.style.translate = "";
+      if (column?.style.translate) column.style.translate = "";
     } else {
       if (!("shift" in root.dataset)) root.dataset.shift = "";
-      const translate = `${this.shift.x}px 0`;
-      for (const el of pages) el.style.translate = translate;
+      if (column) column.style.translate = `${this.shift.x}px 0`;
     }
 
     const pitch = Math.max(1, this.pitch);

@@ -14,6 +14,10 @@ import { Scrollbar } from "./scrollbar";
 // true for the j shaped flight
 const PIVOT = false;
 const MAX_BLUR = 16;
+// side pane's space above the footer, matches the gap under it
+const FOOTER_GAP = 16;
+// how far the side pane can rise before its close button meets the nav
+const CLOSE_SLACK = 24;
 // pull distance in px to dismiss
 const DISMISS_DISTANCE = 140;
 const DISMISS_SPEED = 700;
@@ -155,6 +159,65 @@ export function Modal({ children, labelledBy }: { children: React.ReactNode; lab
       return null;
     };
 
+    const restFrame = (): Frame => {
+      const panelStyle = panel.style.cssText;
+      const scrollStyle = scroll.style.cssText;
+      panel.style.cssText = "";
+      scroll.style.cssText = "";
+      const frame = frameOf(panel.getBoundingClientRect(), radiusOf(panel));
+      panel.style.cssText = panelStyle;
+      scroll.style.cssText = scrollStyle;
+      return frame;
+    };
+
+    // side pane: rides up under the nav as the footer arrives, keeping its height.
+    // moved by inset since a transform on the dialog would capture the fixed panel mid morph
+    const footer = side ? document.querySelector("[data-site-footer]") : null;
+    let raised = 0;
+    const setRaise = (px: number) => {
+      raised = px;
+      dialog.style.inset = px ? `${-px}px 0 ${px}px` : "";
+      // the close button stays in reach
+      closeButton.style.translate = px > CLOSE_SLACK ? `0 ${px - CLOSE_SLACK}px` : "";
+    };
+    // true if it moved
+    const raise = () => {
+      if (!footer) return false;
+      const top = footer.getBoundingClientRect().top;
+      let next = 0;
+      if (top < innerHeight) {
+        const pane = restFrame();
+        next = Math.max(0, pane.cy + pane.h / 2 + raised + FOOTER_GAP - top);
+      }
+      if (Math.abs(next - raised) < 0.1) return false;
+      setRaise(next);
+      return true;
+    };
+    // the footer moves with scrolling, the window, and the page's height
+    const watchFooter = (move: () => void) => {
+      if (!footer) return () => {};
+      const sizes = new ResizeObserver(move);
+      sizes.observe(document.body);
+      sizes.observe(scroll.firstElementChild ?? scroll);
+      addEventListener("scroll", move, { passive: true });
+      addEventListener("resize", move);
+      return () => {
+        sizes.disconnect();
+        removeEventListener("scroll", move);
+        removeEventListener("resize", move);
+        setRaise(0);
+      };
+    };
+
+    // any of the projects section showing below the nav
+    const projectsInView = () => {
+      const section = document.getElementById("projects");
+      if (!section) return true;
+      const { top, bottom } = section.getBoundingClientRect();
+      const nav = document.querySelector("[data-site-nav]")?.getBoundingClientRect().bottom ?? 0;
+      return bottom > nav && top < innerHeight;
+    };
+
     // side pane: column and pane centred together, so the column moves half the pane and gap
     const shiftFor = (pane: Frame) => {
       const gap = parseFloat(getComputedStyle(dialog).getPropertyValue("--gap")) || 0;
@@ -196,6 +259,8 @@ export function Modal({ children, labelledBy }: { children: React.ReactNode; lab
         stage.claim(shiftFor(frameOf(panel.getBoundingClientRect(), 0)), true);
       }
       const unlisten = listenSide();
+      raise();
+      const unwatch = watchFooter(raise);
       closeFn.current = () => {
         if (closing) return;
         closing = true;
@@ -208,6 +273,7 @@ export function Modal({ children, labelledBy }: { children: React.ReactNode; lab
       return () => {
         closeFn.current = null;
         unlisten();
+        unwatch();
         if (matchMedia(WIDE).matches !== side) resume.current = true;
         if (side && !finished) {
           if (card) stage.drop(card, { instant: true });
@@ -219,17 +285,6 @@ export function Modal({ children, labelledBy }: { children: React.ReactNode; lab
         opener?.focus({ preventScroll: true });
       };
     }
-
-    const restFrame = (): Frame => {
-      const panelStyle = panel.style.cssText;
-      const scrollStyle = scroll.style.cssText;
-      panel.style.cssText = "";
-      scroll.style.cssText = "";
-      const frame = frameOf(panel.getBoundingClientRect(), radiusOf(panel));
-      panel.style.cssText = panelStyle;
-      scroll.style.cssText = scrollStyle;
-      return frame;
-    };
 
     // where a side pane's card was before it left the grid
     let lifted: Frame | null = null;
@@ -267,6 +322,7 @@ export function Modal({ children, labelledBy }: { children: React.ReactNode; lab
 
     const morph = new MorphAnimation();
     morph.pivot = PIVOT;
+    raise();
     let rest = restFrame();
     let restSize = { w: rest.w, h: rest.h };
     let source = rest;
@@ -394,6 +450,13 @@ export function Modal({ children, labelledBy }: { children: React.ReactNode; lab
     };
     if (side) addEventListener("resize", onWindowResize);
     const unlisten = listenSide();
+    // retarget if it moves mid flight
+    const unwatch = watchFooter(() => {
+      if (closing || !raise() || !("morphing" in dialog.dataset)) return;
+      rest = restFrame();
+      staleRail();
+      aim();
+    });
 
     card = findCard();
     fillGhost();
@@ -417,6 +480,13 @@ export function Modal({ children, labelledBy }: { children: React.ReactNode; lab
       if (closing) return;
       closing = true;
       cancelAnimationFrame(pullFrame);
+      // flying to a card that's far off screen looks wrong, sink away where it is
+      if (side && !projectsInView()) {
+        recede();
+        if (card) stage.drop(card, { emerge: true });
+        stage.release({ now: true });
+        return finish();
+      }
       if (!("morphing" in dialog.dataset)) {
         // remeasure since content may have scrolled or grown
         const r = radiusOf(panel); // a pull may have rounded these
@@ -574,6 +644,8 @@ export function Modal({ children, labelledBy }: { children: React.ReactNode; lab
           stage.release();
         }
       }
+      // after recede, which copies the pane where it is
+      unwatch();
       settle();
       dialog.close();
       delete dialog.dataset.side;

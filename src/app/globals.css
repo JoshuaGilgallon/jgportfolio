@@ -229,8 +229,8 @@ button:disabled > .haptic-tap {
   padding-inline: var(--gutter);
 }
 
-/* .page moves aside for the project pane on wide screens. lib/side-stage.ts sets
-   translate on each one, rather than transform on a wrapper, so fixed children stay fixed */
+/* #main moves aside for the project pane on wide screens. lib/side-stage.ts sets
+   translate on it, rather than transform on a wrapper, so fixed children stay fixed */
 
 /* cards shuffling between rows travel past the edges */
 html[data-shift] body {

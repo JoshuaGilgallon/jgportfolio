@@ -93,11 +93,12 @@
 
 /* side pane on wide screens, beside the column rather than over it.
    data-side is set from modal.tsx when WIDE in lib/pages.ts matches.
-   column and pane are centred as a pair, modal.tsx shifts the column to match */
+   column and pane are centred as a pair, modal.tsx shifts the column to match.
+   under the nav, since the pane rides up beneath it to clear the footer */
 .dialog[open][data-side] {
   --gap: 48px;
   --side-w: clamp(460px, calc(100% - var(--page) - var(--gap) - 80px), 680px);
-  z-index: 30;
+  z-index: 9;
   display: block;
   padding: 0;
   /* the page stays usable around the pane */

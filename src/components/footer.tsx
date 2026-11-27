@@ -11,7 +11,7 @@ async function Year() {
 
 export function Footer() {
   return (
-    <footer className="page">
+    <footer className="page" data-site-footer>
       <div className={s.footer}>
         <p>
           © <Year /> {site.fullName}
